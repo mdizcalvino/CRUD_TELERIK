@@ -33,6 +33,8 @@ namespace TelerikCore_2.Controllers
             var c = JsonConvert.DeserializeObject<gridDto<OrderDetailsDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
 
+            // prueba
+
             return Json(c);
 
         }
