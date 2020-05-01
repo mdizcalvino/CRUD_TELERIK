@@ -1,0 +1,91 @@
+﻿
+@{
+    ViewData["Title"] = "ProductsView";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>ProductsView</h1>
+
+
+@(Html.Kendo().Grid<Services.Dtos.ProductDto>()
+      .Name("grid_customers")
+      .Columns(columns =>
+      {
+
+          //columns.AutoGenerate(true);
+
+          columns.Bound(p => p.ProductId);
+          columns.Bound(p => p.ProductName);
+          columns.Bound(p => p.Category).ClientTemplate("#=Category.CategoryName#").Width(180);
+          //columns.ForeignKey(p => p.CategoryId, (System.Collections.IEnumerable)ViewData["categories"], "CategoryId", "CategoryName")
+          //.Title("CategoryCombo").Width(200);
+          columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
+      })
+      .ToolBar(tools =>
+      {
+          tools.Create();
+      })
+
+      .Editable(editable => editable.Mode(GridEditMode.InLine))
+      .Sortable()
+      .Pageable()
+      .Filterable()
+      .DataSource(dataSource =>
+          dataSource
+
+            .WebApi()
+            .Model(model =>
+            {
+                model.Id(p => p.ProductId); 
+                 model.Field(p => p.ProductId).Editable(false);
+                model.Field(p => p.Category).DefaultValue(
+                    ViewData["defaultCategory"] as Services.Dtos.CategoryDto);
+                //model.Field(p => p.CategoryId).DefaultValue(1);
+            })
+            .Read(read => read.Action("Get", "Products"))
+            .Create(create => create.Action("Post", "Products"))
+            .Update(update => update.Action("Put", "Products", new { id = "{0}" }))
+            .Destroy(destroy => destroy.Action("DELETE", "Products", new { id = "{0}" }))
+      )
+)
+
+
+
+@*@(Html.Kendo().Grid<Services.Dtos.ProductDto>()
+          .Name("grid_customers")
+          .Columns(columns =>
+          {
+
+              //columns.AutoGenerate(true);
+
+              columns.Bound(p => p.ProductId);
+              columns.Bound(p => p.ProductName);
+              columns.ForeignKey(p => p.CategoryId, (System.Collections.IEnumerable)ViewData["categories"], "CategoryId", "CategoryName")
+                .Title("CategoryCombo").Width(200);
+              columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
+          })
+          .ToolBar(tools =>
+          {
+              tools.Create();
+          })
+
+          .Editable(editable => editable.Mode(GridEditMode.InLine))
+          .Sortable()
+          .Pageable()
+          .Filterable()
+          .DataSource(dataSource =>
+              dataSource
+
+                .WebApi()
+                .Model(model =>
+                {
+                    model.Id(p => p.ProductId);
+                    model.Field(p => p.CategoryId).DefaultValue(1);
+                })
+                .Read(read => read.Action("Get", "Products"))
+                .Create(create => create.Action("Post", "Products"))
+                .Update(update => update.Action("Put", "Products", new { id = "{0}" }))
+                .Destroy(destroy => destroy.Action("DELETE", "Products", new { id = "{0}" }))
+          )
+    )*@
+

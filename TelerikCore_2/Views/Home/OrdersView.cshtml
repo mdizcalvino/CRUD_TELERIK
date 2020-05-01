@@ -1,0 +1,209 @@
+﻿
+@{
+    ViewData["Title"] = "OrdersView";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>OrdersView</h1>
+
+
+
+@(Html.Kendo().Grid<Services.Dtos.OrderDto>()
+      .Name("grid_orders")
+      .Columns(columns =>
+      {
+          //columns.AutoGenerate(true);
+          columns.Bound(p => p.OrderId);
+          columns.ForeignKey(p => p.CustomerId, (System.Collections.IEnumerable)ViewData["customers"], "CustomerId", "CompanyName")
+            .Title("CustomerCbo").Width(200);
+         columns.ForeignKey(p => p.EmployeeId, (System.Collections.IEnumerable)ViewData["employees"], "EmployeeId", "LastName")
+            .Title("EmployeeCbo").Width(200);
+          columns.Bound(p => p.OrderDate); //.Format("{0:G}"); //.Filterable(x => x.UI("datepicker")); //.Filterable(x => x.Cell(y => y.Template("datepicker")));
+          ;
+          columns.Bound(p => p.RequiredDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
+          columns.Bound(p => p.ShippedDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
+          columns.Bound(p => p.ShipVia);
+          columns.Bound(p => p.Freight); //.Format("{0:n}");
+          columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
+      })
+      .ToolBar(tools =>
+      {
+          tools.Create();
+      })
+      .Selectable()
+      .Editable(editable => editable.Mode(GridEditMode.InLine))
+      .Sortable()
+      .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100 }))
+      .Filterable()
+
+      .DataSource(dataSource =>
+          dataSource
+
+            .WebApi()
+            .Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
+            .Model(model =>
+            {
+                model.Id(p => p.OrderId);
+                model.Field(p => p.OrderId).Editable(false);
+                model.Field(p => p.Customer).DefaultValue(
+                   ViewData["defaultCustomer"] as Services.Dtos.CustomersCboDto);
+                model.Field(p => p.Employee).DefaultValue(
+                   ViewData["defaultEmployee"] as Services.Dtos.EmployeCboDto);
+                //model.Field(p => p.Employee).DefaultValue(
+                //    ViewData["defaultEmployees"] as Services.Dtos.EmployeCboDto);
+            })
+            .Read(read => read.Action("Get", "Orders"))
+            .Create(create => create.Action("Post", "Orders"))
+            .Update(update => update.Action("Put", "Orders", new { id = "{0}" }))  //.Culture("es-ES")  //.Data("sendAntiForgery")
+            .Destroy(destroy => destroy.Action("DELETE", "Orders", new { id = "{0}" }))
+
+
+
+      )
+
+      .Events(events => events.Change("change"))
+//.Events(events => events.SaveChanges("savechanges"))
+//.Events(events => events.Save("save"))
+
+
+)
+
+<br />
+<br />
+<br />
+<script>
+
+    function convertDecimals(data) {
+        for (var property in data) {
+            var value = data[property];
+            if (typeof value === "number") {
+                // if the number is integer
+                if (value % 1 == 0) {
+                    data[property] = value.toString();
+                }
+                else {
+                    data[property] = kendo.toString(value, "n");
+                }
+            }
+        }
+    }
+
+
+    function sendAntiForgery(data) {
+        if (data) {
+            data.OrderDate = data.OrderDate.toLocaleString(kendo.culture().name);
+            data.RequiredDate = data.RequiredDate.toLocaleString(kendo.culture().name);
+            data.ShippedDate = data.ShippedDate.toLocaleString(kendo.culture().name);
+            data.Freight = data.Freight.toLocaleString(kendo.culture().name);
+
+            //data.models[0].FinVigencia = data.models[0].FinVigencia.toISOString();
+            //}
+            return; // { "__RequestVerificationToken": $('input[name=__RequestVerificationToken]').val() }
+        }
+    }
+
+
+    function parameterMap(data, operation) {
+        if (operation != "read") {
+            var parsedDate = kendo.parseDate(data.OrderDate, "dd/MM/yyyy");;
+            data.startDate = parsedDate;
+            return data;
+        }
+    }
+</script>
+
+<script>
+
+    function save(args) {
+
+
+        var a = "";
+        //args.model.set('ShippedDate', kendo.parseDate(args.model.ShippedDate, "yyyy/MM/dd"));
+        //args.model.ShippedDate = kendo.parseDate(args.model.ShippedDate, "yyyy/MM/dd");
+
+    }
+
+    function savechanges(args) {
+
+        args.kendoDatePicker({
+            format: "{0:dd/MM/yyyy HH:mm:ss}"
+        });
+
+    }
+
+    function datepicker(args) {
+
+        args.kendoDatePicker({
+            format: "{0:dd/MM/yyyy HH:mm:ss}"
+        });
+
+    }
+
+    function change(e) {
+        var dataItem = this.dataItem(this.select());
+        var orderId = dataItem.OrderId;
+
+        $("#Child").data("kendoGrid").dataSource.read({ id: orderId });
+        $("#Child").css("display", "block");
+    }
+
+    
+    function ChildGridParam(e) {
+        var dataItem = this.dataItem(this.select());
+        var orderId = dataItem.OrderId;
+
+        //$("#Child").data("kendoGrid").dataSource.read({ id: orderId });
+        //$("#Child").css("display", "block");
+    }
+
+
+</script>
+
+@(Html.Kendo().Grid<Services.Dtos.OrderDetailsDto>()
+              .Name("Child")
+              .AutoBind(false)
+              .HtmlAttributes(new { style = "display: none" })
+
+              .Columns(columns =>
+              {
+                  //columns..AutoGenerate(true);
+                  columns.Bound(p => p.OrderId);
+                  columns.ForeignKey(p => p.ProductId, (System.Collections.IEnumerable)ViewData["products"], "ProductId", "ProductName")
+                        .Title("ProductCbo").Width(200);
+                  columns.Bound(p => p.UnitPrice);
+                  columns.Bound(p => p.Quantity);
+                  columns.Bound(p => p.Discount);
+                  columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
+              })
+              .ToolBar(tools =>
+              {
+                  tools.Create();
+              })
+              //.Selectable()
+              .Editable(editable => editable.Mode(GridEditMode.InLine))
+              .Sortable()
+              .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100 }))
+              .Filterable()
+              .DataSource(ds => ds
+                .Ajax()
+                //.WebApi()
+                //.Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
+                .ServerOperation(true)
+
+                .Model(model =>
+                {
+                    model.Id(p => p.OrderId);
+                    model.Field(p => p.OrderId).Editable(false);
+                    model.Field(p => p.Product).DefaultValue(
+                       ViewData["defaultProduct"] as Services.Dtos.ProductCboDto);
+
+                })
+                //.Read(read => read.Action("GetDetailOrder", "OrderDetails"))
+                //.Read(read => read.Action("GetDetailOrder", "OrderDetails").Data(@<text>function() { return { id : "#= kendo.toString(fecha_venc, 'G') #" } }</text>))
+                //.Read(read => read.Action("GetDetailOrder", "OrderDetails", new { id = "#=OrderId#" }))
+                .Read(read => read.Action("GetDetailOrder", "OrderDetails").Data("save"))
+
+
+
+)
+)

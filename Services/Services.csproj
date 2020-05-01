@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    
+    <PackageReference Include="AutoMapper" Version="9.0.0" />
+    
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
+    
+    <PackageReference Include="Telerik.UI.for.AspNet.Core.Trial" Version="2020.1.219" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Modelos\Modelos.csproj" />
+    
+  </ItemGroup>
+
+</Project>

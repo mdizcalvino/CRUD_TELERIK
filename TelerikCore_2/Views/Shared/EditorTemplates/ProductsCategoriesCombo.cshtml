@@ -1,0 +1,14 @@
+﻿@*@model object
+
+@(
+    Html.Kendo().DropDownListFor(m => m)
+           .BindTo((SelectList)ViewData[ViewData.TemplateInfo.GetFullHtmlFieldName("") + "_Data"])
+)*@
+
+@model Services.Dtos.CategoryDto
+
+@(Html.Kendo().DropDownListFor(m => m)
+            .DataValueField("CategoryId")
+            .DataTextField("CategoryName")
+            .BindTo((System.Collections.IEnumerable)ViewData["categories"])
+)
