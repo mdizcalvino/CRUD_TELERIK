@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
 using WebAPI_2.Middleware;
@@ -34,6 +37,26 @@ namespace WebAPI_2
 
             services.AddControllers(); //.AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver  = new DefaultContractResolver());
 
+           
+
+            services.AddSwaggerGen(c => {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "WEB API TEST Documentación",
+                    Version = "v1",
+                    Description = "REST API  para Pruebas",
+                    Contact = new OpenApiContact()
+                    {
+                        Name = "Name Example",
+                        Email = "manueldizcalvino@gmail.com"
+                    }
+
+                });
+                //var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.XML";
+                //var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                //c.IncludeXmlComments(xmlPath);
+            });
+
             IoC.AddDependency(services);
 
             // Add framework services.
@@ -49,6 +72,14 @@ namespace WebAPI_2
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            // Crea un middleware para exponer la documentación en el JSON.
+            app.UseSwagger();
+            // Crea  un middleware para exponer el UI (HTML, JS, CSS, etc.),
+            // Especificamos en que endpoint buscara el json.
+            app.UseSwaggerUI(c => {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TEST Api V1");
+            });
 
             app.UseHttpsRedirection();
 

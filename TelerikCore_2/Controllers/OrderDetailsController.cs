@@ -24,10 +24,10 @@ namespace TelerikCore_2.Controllers
 
             //if(request.PageSize == 0) { request.PageSize = 10; }
 
-            //var a = Request.QueryString;
+            var a = Request.QueryString;
 
             var client = _httpClientFactory.CreateClient("TEST");
-            var response = await client.GetAsync($"OrderDetails/{id}").Result.Content.ReadAsStringAsync();
+            var response = await client.GetAsync($"OrderDetails/{id}{a}").Result.Content.ReadAsStringAsync();
 
 
             var c = JsonConvert.DeserializeObject<gridDto<OrderDetailsDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });

@@ -8,40 +8,72 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Services.Dtos;
+using Services.HttpServices;
 
 namespace TelerikCore_2.Controllers
 {
-    public class ProductsController : Controller
+    public class ProductsController : Controller, IGenericController<ProductDto>
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+      
+        private readonly IGenericHttpService<ProductDto> _genericHttpService;
 
-        public ProductsController(IHttpClientFactory httpClientFactory)
+        public ProductsController(IGenericHttpService<ProductDto> genericHttpService)
+        {         
+            _genericHttpService = genericHttpService;
+            _genericHttpService.controlador = "Products";
+        }     
+
+
+        public async Task<ActionResult<gridDto<ProductDto>>> Get([DataSourceRequest] DataSourceRequest request)
         {
-            _httpClientFactory = httpClientFactory;
+            var query = Request.QueryString;
+            var result = await _genericHttpService.HttpGetAsync(query);
+
+            return Json(result);
+        }
+
+        public Task<ActionResult> Post([DataSourceRequest] DataSourceRequest request, ProductDto tDto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, ProductDto tDto, int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, ProductDto tDto, int id)
+        {
+            throw new NotImplementedException();
         }
 
 
-        public async Task<ActionResult<gridDto<ProductDto>>> Get([DataSourceRequest]DataSourceRequest request)
-        {
-
-            var a = Request.QueryString;
-
-            var client = _httpClientFactory.CreateClient("TEST");
-            var response = await client.GetAsync($"Products{a}").Result.Content.ReadAsStringAsync();           
 
 
-            var c = JsonConvert.DeserializeObject<gridDto<ProductDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
-            //var c = JsonConvert.DeserializeObject<DataSourceResult>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+        //public async Task<ActionResult<gridDto<ProductDto>>> Get([DataSourceRequest]DataSourceRequest request)
+        //{
+
+        //    var a = Request.QueryString;
+
+        //    var client = _httpClientFactory.CreateClient("TEST");
+        //    var response = await client.GetAsync($"Products{a}").Result.Content.ReadAsStringAsync();           
 
 
-            return Json(c);
+        //    var c = JsonConvert.DeserializeObject<gridDto<ProductDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+        //    //var c = JsonConvert.DeserializeObject<DataSourceResult>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
 
-            //var b = JsonConvert.DeserializeObject<List<Customers>>(response).AsQueryable();
+        //    return Json(c);
 
 
-        }
+        //    //var b = JsonConvert.DeserializeObject<List<Customers>>(response).AsQueryable();
+
+
+        //}
+
+
 
 
 

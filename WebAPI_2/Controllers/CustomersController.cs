@@ -173,7 +173,7 @@ namespace WebAPI_2.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> PutCustomers([DataSourceRequest] DataSourceRequest request, CustomersDto customerdto)
         {
-            var a = "";
+            
             //if (id != customerdto.CustomerId)
             //{
             //    return BadRequest();
@@ -299,7 +299,7 @@ namespace WebAPI_2.Controllers
         public async Task<ActionResult<Customers>> DeleteCustomers(string id)
         {
 
-            await _genericRepository.DeleteAsync(id);
+            await _genericRepository.DeleteAsync(x => x.CustomerId == id);
 
             return StatusCode(200);
 

@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
+using Services.HttpServices;
 
 namespace TelerikCore_2
 {
@@ -62,6 +63,8 @@ namespace TelerikCore_2
 
             services.AddHttpClient("TEST",op => 
             op.BaseAddress = new Uri("https://localhost:44319/api/"));
+
+            services.AddScoped(typeof(IGenericHttpService<>), typeof(GenericHttpService<>));
 
             services.AddDbContext<ApplicationDBContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));

@@ -16,8 +16,9 @@
           columns.Bound(p => p.OrderId);
           columns.ForeignKey(p => p.CustomerId, (System.Collections.IEnumerable)ViewData["customers"], "CustomerId", "CompanyName")
             .Title("CustomerCbo").Width(200);
-         columns.ForeignKey(p => p.EmployeeId, (System.Collections.IEnumerable)ViewData["employees"], "EmployeeId", "LastName")
-            .Title("EmployeeCbo").Width(200);
+          columns.ForeignKey(p => p.EmployeeId, (System.Collections.IEnumerable)ViewData["employees"], "EmployeeId", "LastName")
+             .Title("EmployeeCbo").Width(200);
+          //columns.Bound(p => p.Category).ClientTemplate("#=Category.CategoryName#").Width(180);
           columns.Bound(p => p.OrderDate); //.Format("{0:G}"); //.Filterable(x => x.UI("datepicker")); //.Filterable(x => x.Cell(y => y.Template("datepicker")));
           ;
           columns.Bound(p => p.RequiredDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
@@ -30,25 +31,27 @@
       {
           tools.Create();
       })
-      .Selectable()
+      .Selectable(x => x.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
       .Editable(editable => editable.Mode(GridEditMode.InLine))
       .Sortable()
-      .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100 }))
+      .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100, 1000 }))
       .Filterable()
+
 
       .DataSource(dataSource =>
           dataSource
-
+            
             .WebApi()
+            .Events(events => events.Error("onError"))
             .Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
             .Model(model =>
             {
                 model.Id(p => p.OrderId);
                 model.Field(p => p.OrderId).Editable(false);
-                model.Field(p => p.Customer).DefaultValue(
-                   ViewData["defaultCustomer"] as Services.Dtos.CustomersCboDto);
-                model.Field(p => p.Employee).DefaultValue(
-                   ViewData["defaultEmployee"] as Services.Dtos.EmployeCboDto);
+                model.Field(p => p.CustomerId).DefaultValue((
+                   ViewData["defaultCustomer"] as Services.Dtos.CustomersCboDto).CustomerId);
+                model.Field(p => p.EmployeeId).DefaultValue((
+                   ViewData["defaultEmployee"] as Services.Dtos.EmployeCboDto).EmployeeId);
                 //model.Field(p => p.Employee).DefaultValue(
                 //    ViewData["defaultEmployees"] as Services.Dtos.EmployeCboDto);
             })
@@ -62,6 +65,9 @@
       )
 
       .Events(events => events.Change("change"))
+      .Events(events => events.Page("paginacion"))
+      
+
 //.Events(events => events.SaveChanges("savechanges"))
 //.Events(events => events.Save("save"))
 
@@ -114,47 +120,102 @@
 
 <script>
 
-    function save(args) {
+    let selectedId = {
+        id: "",      
+        set setid(val) { this.id = val; },
+        getid: function (val) {return (this.id === val)}           
+    };    
 
-
-        var a = "";
-        //args.model.set('ShippedDate', kendo.parseDate(args.model.ShippedDate, "yyyy/MM/dd"));
-        //args.model.ShippedDate = kendo.parseDate(args.model.ShippedDate, "yyyy/MM/dd");
-
+    function paginacion(e) {
+        $("#Child").css("display", "none");
     }
 
-    function savechanges(args) {
+    function addParameter(args) {      
 
-        args.kendoDatePicker({
-            format: "{0:dd/MM/yyyy HH:mm:ss}"
-        });
+        return { id: $.map($("#grid_orders").data("kendoGrid")._selectedIds, function (key, value) { return value }).toString() };
+    }  
 
+    function change(e) { 
+
+        //this.dataSource.getByUid(this.select().data("uid"));
+
+         var dataItem = this.dataItem(this.select());         
+
+         if (!selectedId.getid(dataItem.OrderId.toString())) {
+
+             selectedId.id = dataItem.OrderId.toString();
+             $("#Child").data("kendoGrid").dataSource.read(); 
+             $("#Child").css("display", "block");
+             
+         } 
+            
+         return;      
     }
 
-    function datepicker(args) {
+    function onError(e) {
+        this.cancelChanges();
 
-        args.kendoDatePicker({
-            format: "{0:dd/MM/yyyy HH:mm:ss}"
-        });
+        var errorMessage = "";
+        if (e.errors) {
+            for (var error in e.errors) {
+                errorMessage += e.errors[error].errors[0] + " ";
+            }
+        }
+
+            alert(errorMessage);
 
     }
+    
+    //function error_handler(e, f) {
+    //    if (e.errors) {
+    //        var message = "Errors:\n";
+    //        $.each(e.errors, function (key, value) {
+    //            if ('errors' in value) {
+    //                $.each(value.errors, function() {
+    //                    message += this + "\n";
+    //                });
+    //            }
+    //        });
+    //        alert(message);
+    //    }
+    //}
 
-    function change(e) {
-        var dataItem = this.dataItem(this.select());
-        var orderId = dataItem.OrderId;
 
-        $("#Child").data("kendoGrid").dataSource.read({ id: orderId });
-        $("#Child").css("display", "block");
-    }
+    //function change(e) {
+
+    //    if(selectedId.i)
+
+    //    var dataItem = this.dataItem(this.select());
+    //    var orderId = dataItem.OrderId;
+
+    //    $("#Child").data("kendoGrid").dataSource.read(); //({ id: orderId });
+    //    $("#Child").css("display", "block");
+    //}
+
+    //  function savechanges(args) {
+
+    //    args.kendoDatePicker({
+    //        format: "{0:dd/MM/yyyy HH:mm:ss}"
+    //    });
+
+    //}
+
+    //function datepicker(args) {
+
+    //    args.kendoDatePicker({
+    //        format: "{0:dd/MM/yyyy HH:mm:ss}"
+    //    });
+
+    //}
 
     
-    function ChildGridParam(e) {
-        var dataItem = this.dataItem(this.select());
-        var orderId = dataItem.OrderId;
+    //function ChildGridParam(e) {
+    //    var dataItem = this.dataItem(this.select());
+    //    var orderId = dataItem.OrderId;
 
-        //$("#Child").data("kendoGrid").dataSource.read({ id: orderId });
-        //$("#Child").css("display", "block");
-    }
+    //    //$("#Child").data("kendoGrid").dataSource.read({ id: orderId });
+    //    //$("#Child").css("display", "block");
+    //}
 
 
 </script>
@@ -185,10 +246,10 @@
               .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100 }))
               .Filterable()
               .DataSource(ds => ds
-                .Ajax()
-                //.WebApi()
-                //.Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
-                .ServerOperation(true)
+                //.Ajax()
+                .WebApi()
+                .Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
+                //.ServerOperation(true)
 
                 .Model(model =>
                 {
@@ -201,7 +262,7 @@
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails"))
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails").Data(@<text>function() { return { id : "#= kendo.toString(fecha_venc, 'G') #" } }</text>))
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails", new { id = "#=OrderId#" }))
-                .Read(read => read.Action("GetDetailOrder", "OrderDetails").Data("save"))
+                .Read(read => read.Action("GetDetailOrder", "OrderDetails").Data("addParameter"))
 
 
 

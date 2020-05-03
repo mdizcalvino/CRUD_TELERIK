@@ -17,24 +17,20 @@ namespace Services
     public interface IGenericRepository<TIN, TOUT> 
         where TIN : class
         where TOUT : class
-    {
-        //Task<IEnumerable<T>> GetAsync(DataSourceRequest dataSourceRequest);
+    {    
 
-        //Task<DataSourceResult> GetAsync(DataSourceRequest dataSourceRequest);
         Task<gridDto<TOUT>> GetAsync(DataSourceRequest dataSourceRequest);
         Task<gridDto<TOUT>> GetPropertiesAsync(DataSourceRequest dataSourceRequest, params Expression<Func<TIN, object>>[] includeProperties);
         Task<gridDto<TOUT>> GetPropertiesByIdAsync(DataSourceRequest dataSourceRequest, Expression<Func<TIN, bool>> whereCondition = null, params Expression<Func<TIN, object>>[] includeProperties);
 
-        Task<IList<TOUT>> GetAllAsync();
-
-        //Task<>
+        Task<IList<TOUT>> GetAllAsync();      
 
         //Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>> whereCondition = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, string includeProperties = "");
 
-        Task CreateAsync(TOUT entity_out);
-        Task UpdateAsync(Func<TIN, bool> predicate,TOUT entityDto);
+        Task<TOUT> CreateAsync(TOUT entity_out);
+        Task<TOUT> UpdateAsync(Expression<Func<TIN, bool>> predicate,TOUT entityDto);
 
-        Task DeleteAsync(string id);
+        Task DeleteAsync(Expression<Func<TIN, bool>> predicate);
         
     }
 
@@ -74,13 +70,14 @@ namespace Services
 
 
 
-        public async Task CreateAsync(TOUT entity_out)
+        public async Task<TOUT> CreateAsync(TOUT entity_out)
         {
             try
             {
                 var entidad = _mapper.Map<TIN>(entity_out);
                 await _unitofWork._context.Set<TIN>().AddAsync(entidad);
                 _unitofWork.Commit();
+                return _mapper.Map<TOUT>(entidad);
             }
             catch (Exception)
             {
@@ -90,30 +87,42 @@ namespace Services
 
         }
 
-        public async Task UpdateAsync(Func<TIN, bool> predicate, TOUT entityDto)
+        public async Task<TOUT> UpdateAsync(Expression<Func<TIN, bool>> predicate, TOUT entityDto)
         {
+            try
+            {
+                var c = await _unitofWork._context.Set<TIN>().FirstAsync(predicate);
 
-            var c = _unitofWork._context.Set<TIN>().FirstOrDefault(predicate);
-
-            var entidad = _mapper.Map(entityDto, c, typeof(TOUT), typeof(TIN));  //  <TIN>(entityDto);
-            _unitofWork._context.Set<TIN>().Attach((TIN)entidad); //.Property(    ..Collection(t => t..Aggregate     .Aggregate( .Property()..Navigations;
-            _unitofWork._context.Entry(entidad).State = EntityState.Modified;
-            _unitofWork.Commit();
+                var entidad = _mapper.Map(entityDto, c, typeof(TOUT), typeof(TIN));
+                _unitofWork._context.Set<TIN>().Attach((TIN)entidad);
+                _unitofWork._context.Entry(entidad).State = EntityState.Modified;
+                _unitofWork.Commit();
+                return _mapper.Map<TOUT>(entidad);
+            }
+            catch(Exception)
+            {
+                throw new NotImplementedException();
+            }
         }
 
-        public async Task DeleteAsync(string id)
+        public async Task DeleteAsync(Expression<Func<TIN, bool>> predicate)
         {
-            var entidad = await _unitofWork._context.Set<TIN>().FindAsync(id);
-            
-            //if (customers == null)
-            //{
-            //    return NotFound();
-            //}
+            try
+            {
+                var entidad = await _unitofWork._context.Set<TIN>().FirstAsync(predicate);
 
-            _unitofWork._context.Set<TIN>().Remove(entidad);
-            _unitofWork.Commit(); // await _context.SaveChangesAsync();
+                //if (customers == null)
+                //{
+                //    return NotFound();
+                //}
 
-            
+                _unitofWork._context.Set<TIN>().Remove(entidad);
+                _unitofWork.Commit();
+            }
+            catch(Exception)
+            {
+                throw new NotImplementedException();
+            }
         }
 
 
@@ -137,9 +146,7 @@ namespace Services
         }
 
         public async Task<gridDto<TOUT>> GetPropertiesByIdAsync(DataSourceRequest dataSourceRequest, Expression<Func<TIN, bool>> whereCondition = null, params Expression<Func<TIN, object>>[] includeProperties)
-        {
-
-           
+        {           
 
             IQueryable<TIN> query = _unitofWork._context.Set<TIN>().AsNoTracking();
 
@@ -149,55 +156,32 @@ namespace Services
 
             DataSourceResult result = (await query.ToDataSourceResultAsync(dataSourceRequest) as DataSourceResult);
 
-
-            //return includeProperties
-            //    .Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
-
-
             var dest = _mapper.Map<gridDto<TOUT>>(result);
             return dest;
+
         }
 
 
         public async Task<gridDto<TOUT>> GetPropertiesAsync(DataSourceRequest dataSourceRequest, params Expression<Func<TIN, object>>[] includeProperties )
         {
 
-            //var ver = _unitofWork._context.Products.Include("Category"); //  .Set<TIN>();
-            ////var query = await ver.Include<TIN>(includeProperties).ToListAsync();
-
-
-
-            //DataSourceResult result = (await _unitofWork._context.Set<TIN>().Include(includeProperties).ToDataSourceResultAsync(dataSourceRequest) as DataSourceResult);
-
             IQueryable<TIN> query = _unitofWork._context.Set<TIN>().AsNoTracking();
             query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
 
             DataSourceResult result = (await query.ToDataSourceResultAsync(dataSourceRequest) as DataSourceResult);
-
             
-            //return includeProperties
-            //    .Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
-
-
             var dest = _mapper.Map<gridDto<TOUT>>(result);
             return dest;
         }
 
         public async Task<gridDto<TOUT>> GetAsync(DataSourceRequest dataSourceRequest)
-        {
-          
-          
-            //return await _unitofWork._context.Set<T>().ToDataSourceResultAsync(dataSourceRequest);
+        {                   
+      
             DataSourceResult result = (await _unitofWork._context.Set<TIN>().AsNoTracking().ToDataSourceResultAsync(dataSourceRequest) as DataSourceResult);
 
-            //genericoOrigen<TIN>.data = (result.Data as IList<TIN>);
-            ////ConvertToDBEntity(result);
-            //var ver2 = _mapper.Map<genericoDestino<TOUT>>(result.Data);
-            //var ver = _mapper.Map((genericoOrigen<TIN>.data),  typeof(TIN), typeof(TOUT)); // , typeof(genericoDestino<TOUT>))()
             var dest = _mapper.Map<gridDto<TOUT>>(result);
-            return dest; // _mapper.Map<gridDto<CustomersDto>>(result);
-
-            //return await _unitofWork._context.Set<T>().ToListAsync();
+            return dest; 
+            
         }
 
         //public async Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>> whereCondition = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, string includeProperties = "")
