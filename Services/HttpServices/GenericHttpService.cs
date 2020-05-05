@@ -17,13 +17,16 @@ namespace Services.HttpServices
 
     public interface IGenericHttpService<T> where T : class
     {
-        public string controlador { set; }      
+
+        public string cliente { set; }
+        public string controlador { set; }  
+        
 
 
-        Task<gridDto<T>> HttpGetAsync(QueryString query);
-        //Task<Tuple<T, HttpStatusCode>> HttPostAsync(T entidadDto);
-        //Task<ActionResult> HttPostAsync(T entidadDto);
+        Task<gridDto<T>> HttpGetAsync(QueryString query);        
         Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto);
+        Task<KeyValuePair<HttpStatusCode, T>> HttpPutAsync(T entidadDto, string id);
+        Task<KeyValuePair<HttpStatusCode, T>> HttpDeleteAsync(T entidadDto, string id);
 
         public struct CustomResponse
         {
@@ -44,10 +47,6 @@ namespace Services.HttpServices
             //public int Length => end - start;
         }
 
-
-
-
-
     }
     public class GenericHttpService<T> :  IGenericHttpService<T> where T : class
     {
@@ -59,14 +58,14 @@ namespace Services.HttpServices
         }
        
 
-        public string controlador { get; set; }
+        public string controlador {private get; set; }
+        public string cliente {private get; set; }
 
-
+        
         public async Task<gridDto<T>> HttpGetAsync(QueryString query)
-        {
-            
+        {            
 
-            var client = _httpClientFactory.CreateClient("TEST");
+            var client = _httpClientFactory.CreateClient($"{cliente}");
             var response = await client.GetAsync($"{controlador}{query}").Result.Content.ReadAsStringAsync();
 
             var entidad = JsonConvert.DeserializeObject<gridDto<T>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
@@ -74,49 +73,59 @@ namespace Services.HttpServices
             return entidad as gridDto<T>;
         }
 
-        //public async Task<Tuple<T, HttpStatusCode>> HttPostAsync(T entidadDto)
-        //{
-        //    var client = _httpClientFactory.CreateClient("TEST");
-        //    using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
-        //    {
-        //        HttpResponseMessage result = await client.PostAsync(controlador, content);
-        //        if (result.StatusCode == System.Net.HttpStatusCode.Created)
-        //        {
-        //            var c = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
-
-        //            return Tuple.Create<T, HttpStatusCode>(c,result.StatusCode);
-        //            //return Json(new[] { c }.ToDataSourceResult(request, ModelState));
-
-        //            //return Ok();
-        //        }
-        //        string returnvalue = result.Content.ReadAsStringAsync().Result;
-        //        return Tuple.Create<T, HttpStatusCode>(null , result.StatusCode);
-        //        //throw new Exception($"Failed to PUT data : ({result.StatusCode}): {returnvalue}");
-        //    }
-        //}
+       
 
         public async Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto)
         {
-            var client = _httpClientFactory.CreateClient("TEST");
+            var client = _httpClientFactory.CreateClient($"{cliente}");
             using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
             {
-                HttpResponseMessage result = await client.PostAsync(controlador, content);
+                HttpResponseMessage result = await client.PostAsync("123", content); //controlador
                 if (result.StatusCode == System.Net.HttpStatusCode.Created)
-                {
-                  
+                {                  
                     var entidad = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
-                    return   new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidad);                    
+                    return   new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidad);                 
                     
-                    //var d = ValueTuple.Create<T, int>(c, (int)result.StatusCode);              
-
                 }
                 string returnvalue = result.Content.ReadAsStringAsync().Result;
 
                 return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
-
                 
             }
         }
+
+        public async Task<KeyValuePair<HttpStatusCode, T>> HttpPutAsync(T entidadDto, string id)
+        {
+            var client = _httpClientFactory.CreateClient($"{cliente}");
+            using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
+            {
+                HttpResponseMessage result = await client.PutAsync($"{controlador}/{id}", content); 
+                if (result.StatusCode == System.Net.HttpStatusCode.Created)
+                {
+                    var entidad = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+                    return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidad);
+                    
+                }
+
+                string returnValue = result.Content.ReadAsStringAsync().Result;
+                return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
+               
+            }
+        }
+
+        public async Task<KeyValuePair<HttpStatusCode, T>> HttpDeleteAsync(T entidadDto, string id)
+        {
+            var client = _httpClientFactory.CreateClient($"{cliente}");
+
+            HttpResponseMessage result = await client.DeleteAsync($"{controlador}/{id}");
+            if (result.StatusCode == System.Net.HttpStatusCode.OK)
+                return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidadDto);
+
+            string returnvalue = result.Content.ReadAsStringAsync().Result;
+            return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
+        }
+
     }
 }

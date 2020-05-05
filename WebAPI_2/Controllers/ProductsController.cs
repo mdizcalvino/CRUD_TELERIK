@@ -10,12 +10,13 @@ using Modelos.Contexto;
 using Modelos.Modelos;
 using Services;
 using Services.Dtos;
+using Services.HttpServices;
 
 namespace WebAPI_2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductsController : ControllerBase, IGenericApiController<ProductDto>
     {
         private readonly IGenericRepository<Products, ProductDto> _genericRepository;
         private readonly IGenericRepository<Products, ProductCboDto> _genericRepositoryCbo;
@@ -39,7 +40,7 @@ namespace WebAPI_2.Controllers
 
         // GET: api/Customers // IGenericRepository IUnitOfWork
         [HttpGet]
-        public async Task<ActionResult<gridDto<ProductDto>>> GetProducts([DataSourceRequest]DataSourceRequest request)
+        public async Task<ActionResult<gridDto<ProductDto>>> GetApi([DataSourceRequest]DataSourceRequest request)
         {
 
 
@@ -66,6 +67,21 @@ namespace WebAPI_2.Controllers
             //return Ok(customersdto);
 
 
+        }
+
+        public Task<ActionResult<ProductDto>> PostApi(ProductDto entityDto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ActionResult<ProductDto>> PutApi(ProductDto entityDto, string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ActionResult<ProductDto>> DeleteApi(string id)
+        {
+            throw new NotImplementedException();
         }
 
         //// GET: api/Products

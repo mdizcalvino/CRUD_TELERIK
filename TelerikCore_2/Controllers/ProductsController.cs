@@ -21,6 +21,7 @@ namespace TelerikCore_2.Controllers
         {         
             _genericHttpService = genericHttpService;
             _genericHttpService.controlador = "Products";
+            _genericHttpService.cliente = "TEST";
         }     
 
 
@@ -32,17 +33,17 @@ namespace TelerikCore_2.Controllers
             return Json(result);
         }
 
-        public Task<ActionResult> Post([DataSourceRequest] DataSourceRequest request, ProductDto tDto)
+        public Task<ActionResult> Post([DataSourceRequest] DataSourceRequest request, ProductDto entityDto)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, ProductDto tDto, int id)
+        public Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, ProductDto entityDto, string id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, ProductDto tDto, int id)
+        public Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, ProductDto entityDto, string id)
         {
             throw new NotImplementedException();
         }
