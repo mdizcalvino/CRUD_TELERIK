@@ -20,8 +20,9 @@ namespace Services.HttpServices
 
         public string cliente { set; }
         public string controlador { set; }  
+       
         
-
+        Task<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>> HttpCbosAsync();
 
         Task<gridDto<T>> HttpGetAsync(QueryString query);        
         Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto);
@@ -73,7 +74,26 @@ namespace Services.HttpServices
             return entidad as gridDto<T>;
         }
 
-       
+        public async Task<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>> HttpCbosAsync()
+        {
+            var client = _httpClientFactory.CreateClient($"{cliente}");
+           
+            HttpResponseMessage result = await client.GetAsync($"Combos/{controlador}Cbos");
+            if (result.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                var entidad = JsonConvert.DeserializeObject<List<KeyValuePair<string, object>>>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+                return new KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>(result.StatusCode, entidad);
+
+            }
+
+            string returnValue = result.Content.ReadAsStringAsync().Result;
+            return new KeyValuePair<HttpStatusCode, List<KeyValuePair<string,object>>>(result.StatusCode, null);
+
+           
+        }
+
+
 
         public async Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto)
         {
@@ -127,5 +147,6 @@ namespace Services.HttpServices
             return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
         }
 
+       
     }
 }

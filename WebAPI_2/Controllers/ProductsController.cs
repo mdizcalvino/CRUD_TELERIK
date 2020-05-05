@@ -43,29 +43,11 @@ namespace WebAPI_2.Controllers
         public async Task<ActionResult<gridDto<ProductDto>>> GetApi([DataSourceRequest]DataSourceRequest request)
         {
 
-
-
-
-            //DataSourceResult result = await _genericRepository.GetAsync(request);
-
-            var dest = await _genericRepository.GetPropertiesAsync(request, p => p.Category); // "Category"); 
-
-            //var resmedio = _mapper.Map <CustomersDto>(result.Data);
-
-            //var dest = _mapper.Map<gridDto<CustomersDto>>(result); //   (result, typeof(DataSourceResult), typeof(CustomersDto<Customers>)); 
-            //var dest = mapper.Map<Source<int>, Destination<int>>(source);
-
-            //var mapeo = _mapper.Map<CustomersDto<Customers>>(result);
-
-
-            //var result = await _context.Customers.ToDataSourceResultAsync(request);
-
-            //var customersdto = new CustomersDto<Customers> { Data = (result.Data as List<Customers>), Total = result.Total, AggregateResults = result.AggregateResults, Errors = result.Errors };
+            var dest = await _genericRepository.GetPropertiesAsync(request, p => p.Category);
 
             return Ok(dest);
 
-            //return Ok(customersdto);
-
+            //var customersdto = new CustomersDto<Customers> { Data = (result.Data as List<Customers>), Total = result.Total, AggregateResults = result.AggregateResults, Errors = result.Errors };
 
         }
 

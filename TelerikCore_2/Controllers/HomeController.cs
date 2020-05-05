@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Services.Dtos;
+using Services.HttpServices;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace TelerikCore_2.Controllers
 {
@@ -13,7 +17,7 @@ namespace TelerikCore_2.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public HomeController(IHttpClientFactory httpClientFactory)
+        public HomeController(IHttpClientFactory httpClientFactory )
         {
             _httpClientFactory = httpClientFactory;
 
@@ -27,25 +31,60 @@ namespace TelerikCore_2.Controllers
 
         public async Task<IActionResult> OrdersView ()
         {
-            var client = _httpClientFactory.CreateClient("TEST");
-            var response = await client.GetAsync($"Customers/Cbo").Result.Content.ReadAsStringAsync();
-            var customerCboDto = JsonConvert.DeserializeObject<List<CustomersCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+            IGenericHttpService<OrderDto> servicio = HttpContext.RequestServices.GetService<IGenericHttpService<OrderDto>>();
+            servicio.cliente = "TEST";
+            servicio.controlador = "Orders";
 
-            ViewData["customers"] = customerCboDto;   //.to categories.ToList();
-            ViewData["defaultCustomer"] = customerCboDto.First();
+            var kv = await servicio.HttpCbosAsync();
 
-            response = await client.GetAsync($"Employees/Cbo").Result.Content.ReadAsStringAsync();
-            var employeeCboDto = JsonConvert.DeserializeObject<List<EmployeCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
-            ViewData["employees"] = employeeCboDto;   //.to categories.ToList();
-            ViewData["defaultEmployee"] = employeeCboDto.First();
-            //ViewData["defaultCategory"] = categories.First();
+            kv.Value.ForEach(x => {                
 
-            response = await client.GetAsync($"Products/Cbo").Result.Content.ReadAsStringAsync();
-            var productsCboDto = JsonConvert.DeserializeObject<List<ProductCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+                switch (x.Key)
+                {
+                    case "customers" :                        
+                        ViewData[x.Key] = ((JArray)x.Value).ToObject(typeof(List<CustomersCboDto>)); 
+                        ViewData["defaultCustomer"] =((List<CustomersCboDto>)((JArray)x.Value).ToObject(typeof(List<CustomersCboDto>))).First();
+                        break;
+                    case "employees":
+                        ViewData[x.Key] = ((JArray)x.Value).ToObject(typeof(List<EmployeCboDto>)); 
+                        ViewData["defaultEmployee"] = ((List<EmployeCboDto>)((JArray)x.Value).ToObject(typeof(List<EmployeCboDto>))).First();
+                        break;
+                    case "products":
+                        ViewData[x.Key] = ((JArray)x.Value).ToObject(typeof(List<ProductCboDto>)); 
+                        ViewData["defaultProduct"] = ((List<ProductCboDto>)((JArray)x.Value).ToObject(typeof(List<ProductCboDto>))).First();
+                        break;
+                    default:
+                        break;
+                }          
 
-            ViewData["products"] = productsCboDto;   //.to categories.ToList();
-            ViewData["defaultProduct"] = productsCboDto.First();
+           });
+
+            //Type type = Assembly.GetCallingAssembly.GetType("")
+
+            //KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>> objetos = JsonConvert.DeserializeObject<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>>(kv, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //var a = "";
+
+            //var client = _httpClientFactory.CreateClient("TEST");
+            //var response = await client.GetAsync($"Customers/Cbo").Result.Content.ReadAsStringAsync();
+            //var customerCboDto = JsonConvert.DeserializeObject<List<CustomersCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //ViewData["customers"] = customerCboDto;   //.to categories.ToList();
+            //ViewData["defaultCustomer"] = customerCboDto.First();
+
+            //response = await client.GetAsync($"Employees/Cbo").Result.Content.ReadAsStringAsync();
+            //var employeeCboDto = JsonConvert.DeserializeObject<List<EmployeCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //ViewData["employees"] = employeeCboDto;   //.to categories.ToList();
+            //ViewData["defaultEmployee"] = employeeCboDto.First();
+            ////ViewData["defaultCategory"] = categories.First();
+
+            //response = await client.GetAsync($"Products/Cbo").Result.Content.ReadAsStringAsync();
+            //var productsCboDto = JsonConvert.DeserializeObject<List<ProductCboDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //ViewData["products"] = productsCboDto;   //.to categories.ToList();
+            //ViewData["defaultProduct"] = productsCboDto.First();
 
             return View();
         }

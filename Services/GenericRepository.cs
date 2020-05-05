@@ -140,6 +140,7 @@ namespace Services
 
         public async Task<IList<TOUT>> GetAllAsync()
         {
+           
             var result = await _unitofWork._context.Set<TIN>().AsNoTracking().ToListAsync();
             var dest = _mapper.Map<IList<TOUT>>(result);
             return dest;
