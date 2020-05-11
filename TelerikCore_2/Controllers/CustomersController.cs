@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Kendo.Mvc.Extensions;
 using Kendo.Mvc.Infrastructure;
 using Kendo.Mvc.UI;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Modelos.Contexto;
 using Modelos.Modelos;
@@ -74,9 +75,12 @@ namespace TelerikCore_2.Controllers
         public async Task<ActionResult<gridDto<CustomersDto>>> Get([DataSourceRequest]DataSourceRequest request)
         {
 
+            var accessToken = await HttpContext.GetTokenAsync("access_token"); //   await HttpContext..Authentication.GetTokenAsync("access_token");
+
             var a = Request.QueryString;
 
             var client = _httpClientFactory.CreateClient("TEST");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.GetAsync($"Customers{a}").Result.Content.ReadAsStringAsync();
 
 

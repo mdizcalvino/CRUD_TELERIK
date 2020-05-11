@@ -10,6 +10,7 @@ using Services.HttpServices;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TelerikCore_2.Controllers
 {
@@ -23,10 +24,14 @@ namespace TelerikCore_2.Controllers
 
         }
 
+        [Authorize]
         public IActionResult Index()
         {
             return View();
         }
+
+        
+
 
 
         public async Task<IActionResult> OrdersView ()

@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
 using Services.HttpServices;
@@ -44,6 +51,94 @@ namespace TelerikCore_2
             //    options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("es-ES");
             //    options.SupportedCultures = new List<CultureInfo> { new CultureInfo("es-ES") , new CultureInfo("en-US") };
             //});
+
+            
+
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+            //services.Configure<ForwardedHeadersOptions>(options =>
+            //{
+            //    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+            //});
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // "Cookies";
+                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme; // "oidc";
+
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultForbidScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignOutScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
+                        options =>
+                        {
+                            options.Cookie.Name = "cookie_nombre"; // adminConfiguration.IdentityAdminCookieName;
+
+                            // Issue: https://github.com/aspnet/Announcements/issues/318
+                            options.Cookie.SameSite = SameSiteMode.None;
+                            options.SlidingExpiration = true;
+                            options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
+                        })
+            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                options.Authority = "http://localhost:5000";
+                options.RequireHttpsMetadata = false;
+
+                options.ClientId = "id_mvc_TELERIK";
+                options.ClientSecret = "4cc3e329-902f-b271-6dd6-eb9b39978780";
+
+                options.ResponseType = "code id_token";
+
+                //options.Events.OnRedirectToIdentityProvider = async n =>
+                //{
+                //    n.ProtocolMessage.RedirectUri = "https://localhost:9001/sigin-oidc";
+                //    await Task.FromResult(0);
+                //};
+
+                options.Scope.Clear();
+
+                options.Scope.Add("profile");
+                options.Scope.Add("offline_access");
+                options.Scope.Add("openid");
+                options.Scope.Add("roles");
+                options.Scope.Add("email");
+                options.Scope.Add("TELERIK_API");
+
+
+                options.ClaimActions.MapJsonKey("role", "role", "role"); // (adminConfiguration.TokenValidationClaimRole, adminConfiguration.TokenValidationClaimRole, adminConfiguration.TokenValidationClaimRole);
+
+                options.SaveTokens = true;
+
+                options.GetClaimsFromUserInfoEndpoint = true;
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = "name", //adminConfiguration.TokenValidationClaimName,
+                    RoleClaimType = "role" // adminConfiguration.TokenValidationClaimRole
+                };
+
+                //options.Events.OnTicketReceived = async (context) =>
+                //{
+                //    context.Properties.ExpiresUtc = DateTime.UtcNow.AddHours(1);
+                //    await Task.FromResult(0);
+                //};
+                options.Events = new OpenIdConnectEvents
+                {
+                    OnMessageReceived = context => OnMessageReceived(context)
+                    //OnRedirectToIdentityProvider = context => OnRedirectToIdentityProvider(context, adminConfiguration)
+                };
+
+                //options.SaveTokens = true;
+
+                //options.GetClaimsFromUserInfoEndpoint = true;
+
+            });
+
+
+
+
             services.Configure<RequestLocalizationOptions>(options =>
             {
                 var supportedCultures = new[]
@@ -89,6 +184,15 @@ namespace TelerikCore_2
             services.AddKendo();
         }
 
+
+        private static Task OnMessageReceived(MessageReceivedContext context)
+        {
+            //context.Properties.IsPersistent = true;
+            context.Properties.ExpiresUtc = new DateTimeOffset(DateTime.Now.AddHours(1)); //.AddHours(adminConfiguration.IdentityAdminCookieExpiresUtcHours));
+
+            return Task.FromResult(0);
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -131,15 +235,19 @@ namespace TelerikCore_2
             app.UseHttpsRedirection();
 
 
+            
           
 
             app.UseStaticFiles();
 
+            app.UseAuthentication();
+
             app.UseRouting();
 
+            
             app.UseAuthorization();
 
-            
+
 
             app.UseEndpoints(endpoints =>
             {

@@ -17,6 +17,7 @@ using Services;
 using AutoMapper;
 using Services.Dtos;
 using Services.Profiles;
+using Microsoft.AspNetCore.Authorization;
 
 
 
@@ -100,9 +101,9 @@ namespace WebAPI_2.Controllers
             //return await _context.Categories.ToListAsync();
         }
 
-
-
+    
         // GET: api/Customers // IGenericRepository IUnitOfWork
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<gridDto<CustomersDto>>> GetCustomers([DataSourceRequest]DataSourceRequest request)
         {

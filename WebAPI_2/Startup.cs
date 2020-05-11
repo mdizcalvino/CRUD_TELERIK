@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -37,7 +38,34 @@ namespace WebAPI_2
 
             services.AddControllers(); //.AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver  = new DefaultContractResolver());
 
-           
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultForbidScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+            })
+               .AddIdentityServerAuthentication(options =>
+               {
+                   options.Authority = "http://localhost:5000";
+                   options.ApiName = "TELERIK_API";
+                   options.RequireHttpsMetadata = false; 
+               });
+        
+
+
+
+        //services.AddAuthentication("Bearer")
+        //      .AddJwtBearer("Bearer", options =>
+        //      {
+        //          options.Authority = "http://localhost:5000";
+        //          options.RequireHttpsMetadata = false;
+
+        //          options.Audience = "TELERIK_API";
+        //      });
+
+
 
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -85,6 +113,7 @@ namespace WebAPI_2
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

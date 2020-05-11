@@ -15,7 +15,7 @@ namespace Services.HttpServices
    
 
 
-    public interface IGenericHttpService<T> where T : class
+    public interface IGenericHttpService<T>  where T : class
     {
 
         public string cliente { set; }
@@ -100,7 +100,7 @@ namespace Services.HttpServices
             var client = _httpClientFactory.CreateClient($"{cliente}");
             using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
             {
-                HttpResponseMessage result = await client.PostAsync("123", content); //controlador
+                HttpResponseMessage result = await client.PostAsync($"{controlador}", content); //controlador
                 if (result.StatusCode == System.Net.HttpStatusCode.Created)
                 {                  
                     var entidad = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
