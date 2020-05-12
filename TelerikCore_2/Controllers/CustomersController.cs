@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -80,14 +81,19 @@ namespace TelerikCore_2.Controllers
             var a = Request.QueryString;
 
             var client = _httpClientFactory.CreateClient("TEST");
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-            var response = await client.GetAsync($"Customers{a}").Result.Content.ReadAsStringAsync();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            //var response = await client.GetAsync($"Customers{a}").Result.Content.ReadAsStringAsync();
+            var response = await client.GetStringAsync($"Customers{a}"); //.Result.Content.ReadAsStringAsync();
 
 
             var resultado = response;
 
 
-            var c = JsonConvert.DeserializeObject<gridDto<CustomersDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });           
+            //var c = JsonConvert.DeserializeObject<gridDto<CustomersDto>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+            var c = JObject.Parse(response).ToObject<gridDto<CustomersDto>>();
+            
+            //var c = JObject.Parse(@response).WriteToAsync(;
+
 
             //var c = JsonConvert.DeserializeObject<DataSourceResult>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 

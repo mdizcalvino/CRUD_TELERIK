@@ -9,6 +9,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using Newtonsoft.Json.Linq;
+
+
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Services.HttpServices
 {
@@ -24,10 +29,12 @@ namespace Services.HttpServices
         
         Task<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>> HttpCbosAsync();
 
-        Task<gridDto<T>> HttpGetAsync(QueryString query);        
+        Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetAsync(QueryString query);
+        Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetDetailAsync(QueryString query, string id);
         Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto);
         Task<KeyValuePair<HttpStatusCode, T>> HttpPutAsync(T entidadDto, string id);
         Task<KeyValuePair<HttpStatusCode, T>> HttpDeleteAsync(T entidadDto, string id);
+        Task<HttpClient> GetHttpClientWithToken();
 
         public struct CustomResponse
         {
@@ -52,32 +59,97 @@ namespace Services.HttpServices
     public class GenericHttpService<T> :  IGenericHttpService<T> where T : class
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GenericHttpService(IHttpClientFactory httpClientFactory)
+        public GenericHttpService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory;
+            _httpContextAccessor = httpContextAccessor;
         }
        
 
         public string controlador {private get; set; }
         public string cliente {private get; set; }
 
-        
-        public async Task<gridDto<T>> HttpGetAsync(QueryString query)
-        {            
+
+        //public async Task<string> GetAccessToken()
+        //{
+        //    return await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
+        //}
+
+        public async Task<HttpClient> GetHttpClientWithToken()
+        {
+            var accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
 
             var client = _httpClientFactory.CreateClient($"{cliente}");
-            var response = await client.GetAsync($"{controlador}{query}").Result.Content.ReadAsStringAsync();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var entidad = JsonConvert.DeserializeObject<gridDto<T>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+            return client;
+        }
+        
+        public async Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetAsync(QueryString query)
+        {
+            //var accessToken = await GetAccessToken(); // await  HttpContext.GetTokenAsync("access_token"); //   await HttpContext..Authentication.GetTokenAsync("access_token");
 
-            return entidad as gridDto<T>;
+
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var client = await GetHttpClientWithToken();
+
+            var result = await client.GetAsync($"{controlador}{query}"); //.Result.Content.ReadAsStringAsync();
+
+            if (result.StatusCode == HttpStatusCode.OK)
+            {
+                var entidad = JObject.Parse(result.Content.ReadAsStringAsync().Result).ToObject<gridDto<T>>();
+                return (result.StatusCode, entidad);
+            }
+
+            return (result.StatusCode, null);
+            //var entidad = JsonConvert.DeserializeObject<gridDto<T>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //return entidad as gridDto<T>;
+
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            //var response = await client.GetAsync($"{controlador}{query}").Result.Content.ReadAsStringAsync();
+
+            //var entidad = JsonConvert.DeserializeObject<gridDto<T>>(response, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
+
+            //return entidad as gridDto<T>;
+        }
+
+
+        public async Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetDetailAsync(QueryString query, string id)
+        {
+            //var accessToken = await GetAccessToken();
+
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var client = await GetHttpClientWithToken();
+
+
+            var result = await client.GetAsync($"{controlador}/{id}{query}"); //.Result.Content.ReadAsStringAsync();
+
+            if (result.StatusCode == HttpStatusCode.OK)
+            {
+                var entidad = JObject.Parse(result.Content.ReadAsStringAsync().Result).ToObject<gridDto<T>>();
+                return (result.StatusCode, entidad);
+            }
+
+            return (result.StatusCode, null);
         }
 
         public async Task<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>> HttpCbosAsync()
         {
-            var client = _httpClientFactory.CreateClient($"{cliente}");
-           
+
+            //var accessToken = await GetAccessToken();
+
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var client = await GetHttpClientWithToken();
+
             HttpResponseMessage result = await client.GetAsync($"Combos/{controlador}Cbos");
             if (result.StatusCode == System.Net.HttpStatusCode.OK)
             {

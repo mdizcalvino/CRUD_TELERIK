@@ -262,7 +262,7 @@
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails"))
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails").Data(@<text>function() { return { id : "#= kendo.toString(fecha_venc, 'G') #" } }</text>))
                 //.Read(read => read.Action("GetDetailOrder", "OrderDetails", new { id = "#=OrderId#" }))
-                .Read(read => read.Action("GetDetailOrder", "OrderDetails").Data("addParameter"))
+                .Read(read => read.Action("GetDetail", "OrderDetails").Data("addParameter"))
 
 
 

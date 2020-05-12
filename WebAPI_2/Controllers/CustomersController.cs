@@ -101,9 +101,10 @@ namespace WebAPI_2.Controllers
             //return await _context.Categories.ToListAsync();
         }
 
-    
+
         // GET: api/Customers // IGenericRepository IUnitOfWork
-        [Authorize]
+        [Authorize(Policy = "RequireAdministratorRole")]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<gridDto<CustomersDto>>> GetCustomers([DataSourceRequest]DataSourceRequest request)
         {

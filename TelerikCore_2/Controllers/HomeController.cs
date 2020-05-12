@@ -24,7 +24,7 @@ namespace TelerikCore_2.Controllers
 
         }
 
-        [Authorize]
+        [Authorize(Policy = "RequireAdministratorRole")]
         public IActionResult Index()
         {
             return View();

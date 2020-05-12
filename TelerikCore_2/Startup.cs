@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -136,8 +137,14 @@ namespace TelerikCore_2
 
             });
 
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdministratorRole",
+                    policy => policy.RequireRole("SkorubaIdentityAdminAdministrator"));
+            });
 
 
+            
 
             services.Configure<RequestLocalizationOptions>(options =>
             {
@@ -158,6 +165,9 @@ namespace TelerikCore_2
 
             services.AddHttpClient("TEST",op => 
             op.BaseAddress = new Uri("https://localhost:44319/api/"));
+
+
+            services.AddHttpContextAccessor();
 
             services.AddScoped(typeof(IGenericHttpService<>), typeof(GenericHttpService<>));
 
@@ -240,11 +250,11 @@ namespace TelerikCore_2
 
             app.UseStaticFiles();
 
-            app.UseAuthentication();
+            //app.UseAuthentication();
 
             app.UseRouting();
 
-            
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

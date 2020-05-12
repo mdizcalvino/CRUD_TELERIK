@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Kendo.Mvc.UI;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modelos.Modelos;
 using Services;
@@ -10,6 +11,7 @@ using Services.HttpServices;
 namespace WebAPI_2.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy = "RequireAdministratorRole")]
     [ApiController]
     public class OrdersController : ControllerBase, IGenericApiController<OrderDto>
     {
@@ -26,7 +28,8 @@ namespace WebAPI_2.Controllers
 
             var dest = await _genericRepository.GetPropertiesAsync(request, p => p.Customer, p => p.Employee);
 
-            return Ok(dest);
+            return StatusCode(200, dest);
+            //return Ok(dest);
 
         }
 

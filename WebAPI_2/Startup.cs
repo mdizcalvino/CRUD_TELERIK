@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using IdentityModel;
 using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -46,24 +47,36 @@ namespace WebAPI_2
                 options.DefaultSignInScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultForbidScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
             })
-               .AddIdentityServerAuthentication(options =>
-               {
-                   options.Authority = "http://localhost:5000";
-                   options.ApiName = "TELERIK_API";
-                   options.RequireHttpsMetadata = false; 
-               });
-        
+            .AddIdentityServerAuthentication(options =>
+            {
+                options.Authority = "http://localhost:5000";
+                options.ApiName = "TELERIK_API";
+                options.RequireHttpsMetadata = false; 
+            });
+
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdministratorRole",
+                    policy =>
+                        policy.RequireAssertion(context => context.User.HasClaim(c =>
+                                (c.Type == JwtClaimTypes.Role && c.Value == "SkorubaIdentityAdminAdministrator") ||
+                                (c.Type == $"client_{JwtClaimTypes.Role}" && c.Value == "SkorubaIdentityAdminAdministrator")
+                            )
+                        ));
+            });
 
 
 
-        //services.AddAuthentication("Bearer")
-        //      .AddJwtBearer("Bearer", options =>
-        //      {
-        //          options.Authority = "http://localhost:5000";
-        //          options.RequireHttpsMetadata = false;
 
-        //          options.Audience = "TELERIK_API";
-        //      });
+            //services.AddAuthentication("Bearer")
+            //      .AddJwtBearer("Bearer", options =>
+            //      {
+            //          options.Authority = "http://localhost:5000";
+            //          options.RequireHttpsMetadata = false;
+
+            //          options.Audience = "TELERIK_API";
+            //      });
 
 
 

@@ -8,10 +8,12 @@ using Modelos.Modelos;
 using Services;
 using Services.Dtos;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebAPI_2.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy = "RequireAdministratorRole")]
     [ApiController]
     public class CombosController : ControllerBase
     {

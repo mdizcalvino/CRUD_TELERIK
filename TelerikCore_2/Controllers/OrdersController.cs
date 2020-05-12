@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kendo.Mvc.Extensions;
 using Kendo.Mvc.UI;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Services.Dtos;
@@ -12,6 +13,8 @@ using Services.HttpServices;
 
 namespace TelerikCore_2.Controllers
 {
+
+    [Authorize(Policy = "RequireAdministratorRole")]
     public class OrdersController : Controller, IGenericController<OrderDto>
     {
 
@@ -29,7 +32,9 @@ namespace TelerikCore_2.Controllers
             var query = Request.QueryString;
             var result = await _genericHttpService.HttpGetAsync(query);
 
-            return Json(result);
+            return StatusCode((int)result.sc, result.gridDto);  //result as ObjectResult;  StatusCodeResult; // StatusCode(((int)result.Item1, result.Item2);
+
+            //return Json(result);
 
         }
 
