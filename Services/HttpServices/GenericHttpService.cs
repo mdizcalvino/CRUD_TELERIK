@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
+using IdentityServer4.AccessTokenValidation;
 
 namespace Services.HttpServices
 {
@@ -82,7 +83,7 @@ namespace Services.HttpServices
             var accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
 
             var client = _httpClientFactory.CreateClient($"{cliente}");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(IdentityServerAuthenticationDefaults.AuthenticationScheme , accessToken);
 
             return client;
         }

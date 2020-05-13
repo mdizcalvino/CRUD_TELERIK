@@ -11,6 +11,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using IdentityServer4.AccessTokenValidation;
 
 namespace TelerikCore_2.Controllers
 {
@@ -24,16 +28,51 @@ namespace TelerikCore_2.Controllers
 
         }
 
+        
+        public async Task<IActionResult> LogOut()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = Url.Action(nameof(LogoutSuccess)) });
+        }
+
+        [HttpGet("logoutSuccess")]
+        public IActionResult LogoutSuccess() => View("about");
+
+
+        //public IActionResult LogOut()
+        //{
+
+        //    return new SignOutResult(new List<string> { CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme });
+
+
+        //    //await _signInManager.SignOutAsync();
+        //    // await HttpContext.SignOutAsync(IdentityserverConstants  "Identity.Application");
+        //    //await HttpContext.SignOutAsync();
+        //    //await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        //    //await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+
+        //    //return Redirect("/"); 
+
+        //    //return LocalRedirect($"/Home/About");
+        //    //return View("About");
+        //}
+
+        //public IActionResult LogOutRedirect()
+        //{
+        //    return View("/home/about");
+        //}
+
+
         [Authorize(Policy = "RequireAdministratorRole")]
         public IActionResult Index()
         {
             return View();
         }
 
-        
 
 
 
+        [Authorize(Policy = "RequireAdministratorRole")]
         public async Task<IActionResult> OrdersView ()
         {
             IGenericHttpService<OrderDto> servicio = HttpContext.RequestServices.GetService<IGenericHttpService<OrderDto>>();

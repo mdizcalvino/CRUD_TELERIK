@@ -20,10 +20,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
 using Services.HttpServices;
+
 
 namespace TelerikCore_2
 {
@@ -90,7 +93,17 @@ namespace TelerikCore_2
                 options.ClientId = "id_mvc_TELERIK";
                 options.ClientSecret = "4cc3e329-902f-b271-6dd6-eb9b39978780";
 
-                options.ResponseType = "code id_token";
+                //para HybridFlow
+                //options.ResponseType = "code id_token";
+
+                //* Code
+                options.ResponseType = OpenIdConnectResponseType.Code; // "code id_token";
+                options.ResponseMode = OpenIdConnectResponseMode.FormPost;
+                options.UsePkce = true;
+                //*
+                
+
+
 
                 //options.Events.OnRedirectToIdentityProvider = async n =>
                 //{
@@ -129,7 +142,16 @@ namespace TelerikCore_2
                 {
                     OnMessageReceived = context => OnMessageReceived(context)
                     //OnRedirectToIdentityProvider = context => OnRedirectToIdentityProvider(context, adminConfiguration)
+
                 };
+
+                //options.Events.OnSignedOutCallbackRedirect += context =>
+                //{
+                //    context.Response.Redirect(context.Options.SignedOutRedirectUri);
+                //    context.HandleResponse();
+
+                //    return Task.CompletedTask;
+                //};
 
                 //options.SaveTokens = true;
 
@@ -245,8 +267,29 @@ namespace TelerikCore_2
             app.UseHttpsRedirection();
 
 
-            
-          
+            ////Registered before static files to always set header
+            //app.UseHsts(hsts => hsts.MaxAge(365).IncludeSubdomains());
+            //app.UseXContentTypeOptions();
+            //app.UseReferrerPolicy(opts => opts.NoReferrer());
+            //app.UseXXssProtection(options => options.EnabledWithBlockMode());
+            //app.UseXfo(options => options.Deny());
+
+            //app.UseCsp(opts => opts
+            //    .BlockAllMixedContent()
+            //    .StyleSources(s => s.Self())
+            //    .StyleSources(s => s.UnsafeInline())
+            //    .FontSources(s => s.Self())
+            //    .FormActions(s => s.Self())
+            //    .FrameAncestors(s => s.Self())
+            //    .ImageSources(imageSrc => imageSrc.Self())
+            //    .ImageSources(imageSrc => imageSrc.CustomSources("data:"))
+            //    .ScriptSources(s => s.Self())
+            //);
+
+
+
+
+
 
             app.UseStaticFiles();
 
