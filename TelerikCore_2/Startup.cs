@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityModel;
+using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -140,8 +141,10 @@ namespace TelerikCore_2
                 //};
                 options.Events = new OpenIdConnectEvents
                 {
-                    OnMessageReceived = context => OnMessageReceived(context)
+                    OnMessageReceived = context => OnMessageReceived(context),
+                    
                     //OnRedirectToIdentityProvider = context => OnRedirectToIdentityProvider(context, adminConfiguration)
+                    
 
                 };
 
@@ -188,6 +191,18 @@ namespace TelerikCore_2
             services.AddHttpClient("TEST",op => 
             op.BaseAddress = new Uri("https://localhost:44319/api/"));
 
+            //services.AddHttpClient("IS4", op =>
+            //    op.BaseAddress = new Uri("http://localhost:5000/connect/token"));
+
+            services.Configure<TokenClientOptions>(options =>
+            {
+                options.Address = "http://localhost:5000/connect/token";
+                options.ClientId = "id_mvc_TELERIK";
+                options.ClientSecret = "4cc3e329-902f-b271-6dd6-eb9b39978780";
+            });
+            services.AddTransient(sp => sp.GetRequiredService<IOptions<TokenClientOptions>>().Value);
+
+            services.AddHttpClient<TokenClient>();
 
             services.AddHttpContextAccessor();
 
@@ -298,6 +313,9 @@ namespace TelerikCore_2
             app.UseRouting();
 
             app.UseAuthentication();
+
+            //app.UseMiddleware<CheckAccessTokenValidityMiddleware>();
+
             app.UseAuthorization();
 
 
@@ -309,5 +327,82 @@ namespace TelerikCore_2
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
+
+
+        //public class CheckAccessTokenValidityMiddleware
+        //{
+        //    private readonly RequestDelegate _next;
+        //    private readonly IConfiguration _configuration;
+
+        //    public CheckAccessTokenValidityMiddleware(RequestDelegate next, IConfiguration configuration)
+        //    {
+        //        _next = next;
+        //        _configuration = configuration;
+        //    }
+
+        //    public async Task InvokeAsync(HttpContext context)
+        //    {
+
+        //        var disco =  DiscoveHttpClientDiscoveryExtensions   ryDocumentRequest DiscoveryClient.GetAsync("https://localhost:44356");
+
+        //        var expireAt = await context.GetTokenAsync("expires_at");
+        //        if (expireAt != null)
+        //        {
+        //            var dateExpireAt = DateTime.Parse(expireAt, null, DateTimeStyles.RoundtripKind);
+        //            if (dateExpireAt != null)
+        //            {
+        //                if ((dateExpireAt - DateTime.Now).TotalMinutes < 10)
+        //                {
+        //                    var discoveryClient = new DiscoveryClient(_configuration["OIDC:Authority"]);
+        //                    discoveryClient.Policy.RequireHttps = false;
+        //                    var discovery = await discoveryClient.GetAsync();
+        //                    if (!discovery.IsError)
+        //                    {
+        //                        using (var tokenClient = new TokenClient(discovery.TokenEndpoint, "id_mvc_TELERIK", "4cc3e329-902f-b271-6dd6-eb9b39978780"))
+        //                        {
+        //                            var refreshToken = await context.GetTokenAsync("refresh_token");
+        //                            var tokenResult = await tokenClient.RequestRefreshTokenAsync(refreshToken);
+        //                            if (!tokenResult.IsError)
+        //                            {
+        //                                var newIdToken = tokenResult.IdentityToken;
+        //                                var newAccessToken = tokenResult.AccessToken;
+        //                                var newRefreshToken = tokenResult.RefreshToken;
+        //                                var tokens = new List<AuthenticationToken>
+        //                        {
+        //                            new AuthenticationToken {Name = OpenIdConnectParameterNames.IdToken, Value = newIdToken},
+        //                            new AuthenticationToken
+        //                            {
+        //                                Name = OpenIdConnectParameterNames.AccessToken,
+        //                                Value = newAccessToken
+        //                            },
+        //                            new AuthenticationToken
+        //                            {
+        //                                Name = OpenIdConnectParameterNames.RefreshToken,
+        //                                Value = newRefreshToken
+        //                            }
+        //                        };
+        //                                var expiresAt = DateTime.Now + TimeSpan.FromSeconds(tokenResult.ExpiresIn);
+        //                                tokens.Add(new AuthenticationToken
+        //                                {
+        //                                    Name = "expires_at",
+        //                                    Value = expiresAt.ToString("o", CultureInfo.InvariantCulture)
+        //                                });
+        //                                var info = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        //                                info.Properties.StoreTokens(tokens);
+        //                                await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, info.Principal, info.Properties);
+        //                            }
+        //                            else
+        //                            {
+        //                                await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        //                                await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        await _next.Invoke(context);
+        //    }
+        //}
     }
 }

@@ -15,6 +15,12 @@ using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
 using IdentityServer4.AccessTokenValidation;
+using System.Globalization;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using IdentityModel.Client;
 
 namespace Services.HttpServices
 {
@@ -61,11 +67,13 @@ namespace Services.HttpServices
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly TokenClient _tokenClient;
 
-        public GenericHttpService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        public GenericHttpService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, TokenClient tokenClient)
         {
             _httpClientFactory = httpClientFactory;
             _httpContextAccessor = httpContextAccessor;
+            _tokenClient = tokenClient;
         }
        
 
@@ -78,14 +86,75 @@ namespace Services.HttpServices
         //    return await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
         //}
 
+        public async Task<(string at, int error)> RefreshToKen()
+        {
+            //  var discoClient = _httpClientFactory.CreateClient("IS4");
+
+
+
+            //var disco = await discoClient.GetDiscoveryDocumentAsync(); // _httpClientFactory.CreateClient("IS4"));
+            //var tokenresponse = await discoClient.RequestRefreshTokenAsync re
+
+            //      //_httpClient,
+            //      //_authConfigurations.Value.StsServer);
+            
+
+            ////var discoClient = _httpClientFactory.CreateClient("IS4");
+
+            ////var disco = await discoClient.GetAsync("https://localhost:44356");
+            //if (disco.IsError) throw new Exception(disco.Error);
+
+            //TokenClientOptions tokenClient = new TokenClientOptions() { ClientId = "4cc3e329-902f-b271-6dd6-eb9b39978780", ClientSecret = "id_mvc_TELERIK" } ;
+          
+
+            //var tokenClient = new TokenClient(  disco.TokenEndpoint, tokenClient);
+            var rt = await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
+            var tokenResult = await _tokenClient.RequestRefreshTokenAsync(rt);
+
+            if (!tokenResult.IsError)
+            {
+                //var expiresAt = (DateTime.UtcNow + TimeSpan.FromSeconds(tokenResult.ExpiresIn)).ToString("o", CultureInfo.InvariantCulture);
+                var expiresAt = (DateTime.Now + TimeSpan.FromSeconds(tokenResult.ExpiresIn)).ToString("o", CultureInfo.InvariantCulture);
+
+                var authService = _httpContextAccessor.HttpContext.RequestServices.GetService<IAuthenticationService>();
+                AuthenticateResult authenticateResult = await authService.AuthenticateAsync(_httpContextAccessor.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme);
+                AuthenticationProperties properties = authenticateResult.Properties;
+
+                properties.UpdateTokenValue(OpenIdConnectParameterNames.RefreshToken, tokenResult.RefreshToken);
+                properties.UpdateTokenValue(OpenIdConnectParameterNames.AccessToken, tokenResult.AccessToken);
+                //properties.UpdateTokenValue(OpenIdConnectParameterNames.ExpiresIn, expiresAt);
+                properties.UpdateTokenValue("expires_at", expiresAt); //OpenIdConnectParameterNames..ExpiresIn
+
+
+                
+                //properties.AllowRefresh = true;
+                //ShouldRenew = true;
+
+                await authService.SignInAsync(_httpContextAccessor.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, authenticateResult.Principal, authenticateResult.Properties);
+
+               
+                
+
+                return (await _httpContextAccessor.HttpContext.GetTokenAsync("access_token"), 0);
+            }
+
+            return  (await _httpContextAccessor.HttpContext.GetTokenAsync("access_token"), 1);
+        }
+
         public async Task<HttpClient> GetHttpClientWithToken()
         {
-            var accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
+            var accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+            int error;
+
+            DateTime accessTokenExpiresAt = DateTime.Parse(await _httpContextAccessor.HttpContext.GetTokenAsync("expires_at"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+            if(DateTime.Now.CompareTo(accessTokenExpiresAt.AddMinutes(-1)) >= 0) { (accessToken, error) = await RefreshToKen(); }
 
             var client = _httpClientFactory.CreateClient($"{cliente}");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(IdentityServerAuthenticationDefaults.AuthenticationScheme , accessToken);
 
             return client;
+
+           
         }
         
         public async Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetAsync(QueryString query)
