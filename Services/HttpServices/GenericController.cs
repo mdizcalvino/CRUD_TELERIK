@@ -11,9 +11,9 @@ namespace Services.HttpServices
     public interface IGenericController<T> where T : class
     {       
         Task<ActionResult<gridDto<T>>> Get([DataSourceRequest]DataSourceRequest request);
-        Task<ActionResult> Post([DataSourceRequest]DataSourceRequest request, T entityDto);
-        Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, T entityDto, string id);
-        Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, T entityDto, string id);
+        Task<ActionResult> Post(T entityDto);
+        Task<ActionResult> Put(T entityDto, string id);
+        Task<ActionResult> Delete(T entityDto, string id);
     }
 
     //public class GenericController<T> : IGenericController<T> where T : class

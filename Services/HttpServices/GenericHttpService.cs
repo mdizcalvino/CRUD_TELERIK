@@ -38,10 +38,11 @@ namespace Services.HttpServices
 
         Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetAsync(QueryString query);
         Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetDetailAsync(QueryString query, string id);
-        Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto);
-        Task<KeyValuePair<HttpStatusCode, T>> HttpPutAsync(T entidadDto, string id);
-        Task<KeyValuePair<HttpStatusCode, T>> HttpDeleteAsync(T entidadDto, string id);
+        Task<(HttpStatusCode sc, T entidad)> HttPostAsync(T entidadDto);
+        Task<(HttpStatusCode sc, T entidad)> HttpPutAsync(T entidadDto, string id);
+        Task<HttpStatusCode> HttpDeleteAsync(string id);
         Task<HttpClient> GetHttpClientWithToken();
+        Task<(string at, int error)> RefreshToKen();
 
         public struct CustomResponse
         {
@@ -81,33 +82,11 @@ namespace Services.HttpServices
         public string cliente {private get; set; }
 
 
-        //public async Task<string> GetAccessToken()
-        //{
-        //    return await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
-        //}
+       
 
         public async Task<(string at, int error)> RefreshToKen()
         {
-            //  var discoClient = _httpClientFactory.CreateClient("IS4");
-
-
-
-            //var disco = await discoClient.GetDiscoveryDocumentAsync(); // _httpClientFactory.CreateClient("IS4"));
-            //var tokenresponse = await discoClient.RequestRefreshTokenAsync re
-
-            //      //_httpClient,
-            //      //_authConfigurations.Value.StsServer);
-            
-
-            ////var discoClient = _httpClientFactory.CreateClient("IS4");
-
-            ////var disco = await discoClient.GetAsync("https://localhost:44356");
-            //if (disco.IsError) throw new Exception(disco.Error);
-
-            //TokenClientOptions tokenClient = new TokenClientOptions() { ClientId = "4cc3e329-902f-b271-6dd6-eb9b39978780", ClientSecret = "id_mvc_TELERIK" } ;
-          
-
-            //var tokenClient = new TokenClient(  disco.TokenEndpoint, tokenClient);
+           
             var rt = await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
             var tokenResult = await _tokenClient.RequestRefreshTokenAsync(rt);
 
@@ -124,16 +103,11 @@ namespace Services.HttpServices
                 properties.UpdateTokenValue(OpenIdConnectParameterNames.AccessToken, tokenResult.AccessToken);
                 //properties.UpdateTokenValue(OpenIdConnectParameterNames.ExpiresIn, expiresAt);
                 properties.UpdateTokenValue("expires_at", expiresAt); //OpenIdConnectParameterNames..ExpiresIn
-
-
                 
                 //properties.AllowRefresh = true;
                 //ShouldRenew = true;
 
-                await authService.SignInAsync(_httpContextAccessor.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, authenticateResult.Principal, authenticateResult.Properties);
-
-               
-                
+                await authService.SignInAsync(_httpContextAccessor.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, authenticateResult.Principal, authenticateResult.Properties);             
 
                 return (await _httpContextAccessor.HttpContext.GetTokenAsync("access_token"), 0);
             }
@@ -153,18 +127,12 @@ namespace Services.HttpServices
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(IdentityServerAuthenticationDefaults.AuthenticationScheme , accessToken);
 
             return client;
-
            
         }
         
         public async Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetAsync(QueryString query)
         {
-            //var accessToken = await GetAccessToken(); // await  HttpContext.GetTokenAsync("access_token"); //   await HttpContext..Authentication.GetTokenAsync("access_token");
-
-
-            //var client = _httpClientFactory.CreateClient($"{cliente}");
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
+          
             var client = await GetHttpClientWithToken();
 
             var result = await client.GetAsync($"{controlador}{query}"); //.Result.Content.ReadAsStringAsync();
@@ -191,15 +159,10 @@ namespace Services.HttpServices
 
         public async Task<(HttpStatusCode sc, gridDto<T> gridDto)> HttpGetDetailAsync(QueryString query, string id)
         {
-            //var accessToken = await GetAccessToken();
-
-            //var client = _httpClientFactory.CreateClient($"{cliente}");
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
+           
             var client = await GetHttpClientWithToken();
 
-
-            var result = await client.GetAsync($"{controlador}/{id}{query}"); //.Result.Content.ReadAsStringAsync();
+            var result = await client.GetAsync($"{controlador}/{id}{query}"); 
 
             if (result.StatusCode == HttpStatusCode.OK)
             {
@@ -213,82 +176,71 @@ namespace Services.HttpServices
         public async Task<KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>> HttpCbosAsync()
         {
 
-            //var accessToken = await GetAccessToken();
-
-            //var client = _httpClientFactory.CreateClient($"{cliente}");
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
             var client = await GetHttpClientWithToken();
 
             HttpResponseMessage result = await client.GetAsync($"Combos/{controlador}Cbos");
             if (result.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 var entidad = JsonConvert.DeserializeObject<List<KeyValuePair<string, object>>>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
-
+               
                 return new KeyValuePair<HttpStatusCode, List<KeyValuePair<string, object>>>(result.StatusCode, entidad);
-
             }
-
-            string returnValue = result.Content.ReadAsStringAsync().Result;
+            
             return new KeyValuePair<HttpStatusCode, List<KeyValuePair<string,object>>>(result.StatusCode, null);
-
            
         }
 
 
 
-        public async Task<KeyValuePair<HttpStatusCode, T>> HttPostAsync(T entidadDto)
+        public async Task<(HttpStatusCode sc, T entidad)> HttPostAsync(T entidadDto)
         {
-            var client = _httpClientFactory.CreateClient($"{cliente}");
-            using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            var client = await GetHttpClientWithToken();
+            using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), Encoding.UTF8, "application/json"))
             {
                 HttpResponseMessage result = await client.PostAsync($"{controlador}", content); //controlador
                 if (result.StatusCode == System.Net.HttpStatusCode.Created)
                 {                  
                     var entidad = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
 
-                    return   new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidad);                 
+                    return (result.StatusCode, entidad);                                
                     
                 }
-                string returnvalue = result.Content.ReadAsStringAsync().Result;
-
-                return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
+               
+                return (result.StatusCode, entidadDto);                
                 
             }
         }
 
-        public async Task<KeyValuePair<HttpStatusCode, T>> HttpPutAsync(T entidadDto, string id)
+        public async Task<(HttpStatusCode sc, T entidad)> HttpPutAsync(T entidadDto, string id)
         {
-            var client = _httpClientFactory.CreateClient($"{cliente}");
-            using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), System.Text.Encoding.UTF8, "application/json"))
+            
+            var client = await GetHttpClientWithToken();
+            using (var content = new StringContent(JsonConvert.SerializeObject(entidadDto), Encoding.UTF8, "application/json"))
             {
                 HttpResponseMessage result = await client.PutAsync($"{controlador}/{id}", content); 
                 if (result.StatusCode == System.Net.HttpStatusCode.Created)
                 {
                     var entidad = JsonConvert.DeserializeObject<T>(result.Content.ReadAsStringAsync().Result, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All });
-
-                    return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidad);
+                   
+                    return (result.StatusCode, entidad);
                     
                 }
-
-                string returnValue = result.Content.ReadAsStringAsync().Result;
-                return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
                
+                return (result.StatusCode, entidadDto);
+
             }
         }
 
-        public async Task<KeyValuePair<HttpStatusCode, T>> HttpDeleteAsync(T entidadDto, string id)
+        public async Task<HttpStatusCode> HttpDeleteAsync(string id)
         {
-            var client = _httpClientFactory.CreateClient($"{cliente}");
-
+            //var client = _httpClientFactory.CreateClient($"{cliente}");
+            var client = await GetHttpClientWithToken();
             HttpResponseMessage result = await client.DeleteAsync($"{controlador}/{id}");
-            if (result.StatusCode == System.Net.HttpStatusCode.OK)
-                return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, entidadDto);
 
-            string returnvalue = result.Content.ReadAsStringAsync().Result;
-            return new KeyValuePair<HttpStatusCode, T>(result.StatusCode, null);
+            return (result.StatusCode);
+           
         }
-
        
     }
 }

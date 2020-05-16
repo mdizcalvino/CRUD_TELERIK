@@ -33,17 +33,17 @@ namespace TelerikCore_2.Controllers
             return Json(result);
         }
 
-        public Task<ActionResult> Post([DataSourceRequest] DataSourceRequest request, ProductDto entityDto)
+        public Task<ActionResult> Post( ProductDto entityDto)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, ProductDto entityDto, string id)
+        public Task<ActionResult> Put( ProductDto entityDto, string id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, ProductDto entityDto, string id)
+        public Task<ActionResult> Delete(ProductDto entityDto, string id)
         {
             throw new NotImplementedException();
         }

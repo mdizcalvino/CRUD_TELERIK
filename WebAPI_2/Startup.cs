@@ -46,12 +46,14 @@ namespace WebAPI_2
                 options.DefaultChallengeScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultForbidScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+               
             })
             .AddIdentityServerAuthentication(options =>
             {
                 options.Authority = "http://localhost:5000";
                 options.ApiName = "TELERIK_API";
-                options.RequireHttpsMetadata = false; 
+                options.RequireHttpsMetadata = false;
+                options.JwtValidationClockSkew = TimeSpan.FromSeconds(30);
             });
 
 

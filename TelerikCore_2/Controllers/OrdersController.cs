@@ -30,47 +30,50 @@ namespace TelerikCore_2.Controllers
         public async Task<ActionResult<gridDto<OrderDto>>> Get([DataSourceRequest]DataSourceRequest request)
         {
             var query = Request.QueryString;
-            var result = await _genericHttpService.HttpGetAsync(query);
+            var (sc, gridDto) = await _genericHttpService.HttpGetAsync(query);
 
-            return StatusCode((int)result.sc, result.gridDto);  //result as ObjectResult;  StatusCodeResult; // StatusCode(((int)result.Item1, result.Item2);
+            return StatusCode((int)sc, gridDto);  //result as ObjectResult;  StatusCodeResult; // StatusCode(((int)result.Item1, result.Item2);
 
             //return Json(result);
 
         }
 
-        public async Task<ActionResult> Post([DataSourceRequest]DataSourceRequest request, OrderDto entityDto)
+        public async Task<ActionResult> Post(OrderDto entityDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));            
 
-            var result = await _genericHttpService.HttPostAsync(entityDto);
+            var (sc, entidad) = await _genericHttpService.HttPostAsync(entityDto);
 
             //return StatusCode((int)result.Key,  new[] { result.Value }?.ToDataSourceResult(request, ModelState) ?? null);
-
-            return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);            
+            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));
+            //return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);            
 
         }
 
-        public async Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, OrderDto entityDto, string id)
+        public async Task<ActionResult> Put(OrderDto entityDto, string id)
         {
 
             if (!ModelState.IsValid || entityDto.OrderId != Int32.Parse(id))            
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
 
-            var result = await _genericHttpService.HttpPutAsync(entityDto, id.ToString());
+            var (sc, entidad) = await _genericHttpService.HttpPutAsync(entityDto, id.ToString());
 
-            return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);
-           
+            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));
+
+
+            //return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);
+
         }
 
-        public async Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, OrderDto entityDto, string id)
+        public async Task<ActionResult> Delete(OrderDto entityDto, string id)
         {
             if (!ModelState.IsValid || entityDto.OrderId != Int32.Parse(id))            
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
 
-            var result = await _genericHttpService.HttpDeleteAsync(entityDto, id.ToString());
+            var result = await _genericHttpService.HttpDeleteAsync(id.ToString());
 
-            return StatusCode((int)result.Key, (result.Value != null) ? new object[] { result.Value }.ToDataSourceResult(request, ModelState) : null);
+            return StatusCode((int)result, new object[] { entityDto }.ToDataSourceResult(new DataSourceRequest(), ModelState));
            
         }
 

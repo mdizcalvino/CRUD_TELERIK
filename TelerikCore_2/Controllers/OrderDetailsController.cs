@@ -35,7 +35,7 @@ namespace TelerikCore_2.Controllers
         }
 
 
-        public Task<ActionResult> Delete([DataSourceRequest] DataSourceRequest request, OrderDetailsDto entityDto, string id)
+        public Task<ActionResult> Delete(OrderDetailsDto entityDto, string id)
         {
             throw new NotImplementedException();
         }
@@ -68,12 +68,12 @@ namespace TelerikCore_2.Controllers
 
         }
 
-        public Task<ActionResult> Post([DataSourceRequest] DataSourceRequest request, OrderDetailsDto entityDto)
+        public Task<ActionResult> Post(OrderDetailsDto entityDto)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ActionResult> Put([DataSourceRequest] DataSourceRequest request, OrderDetailsDto entityDto, string id)
+        public Task<ActionResult> Put(OrderDetailsDto entityDto, string id)
         {
             throw new NotImplementedException();
         }
