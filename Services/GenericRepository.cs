@@ -43,10 +43,10 @@ namespace Services
         where TOUT : class
     {
 
-        private readonly IUnitofWork _unitofWork;
+        private readonly IUnitOfWork _unitofWork;
         private readonly IMapper _mapper;
 
-        public GenericRepository(IUnitofWork unitofWork, IMapper mapper)
+        public GenericRepository(IUnitOfWork unitofWork, IMapper mapper)
         {
             _unitofWork = unitofWork;
             _mapper = mapper; 

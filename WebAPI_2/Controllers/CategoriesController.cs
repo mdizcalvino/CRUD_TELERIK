@@ -17,11 +17,11 @@ namespace WebAPI_2.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly IGenericRepository<Categories, CategoryDto> _genericRepository;
-        private readonly IUnitofWork _unitofWork;
+        private readonly IUnitOfWork _unitofWork;
 
         //private readonly ApplicationDBContext _context;
 
-        public CategoriesController(IGenericRepository<Categories, CategoryDto> genericRepository, IUnitofWork unitofWork )
+        public CategoriesController(IGenericRepository<Categories, CategoryDto> genericRepository, IUnitOfWork unitofWork )
         {
             _genericRepository = genericRepository;
             _unitofWork = unitofWork;

@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
+using Services;
 
 namespace TelerikCore_2
 {
@@ -29,20 +30,8 @@ namespace TelerikCore_2
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
-            //services.Configure<RequestLocalizationOptions>(options =>
-            //{
-            //    options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
-            //    options.SupportedCultures = new List<CultureInfo> { new CultureInfo("en-GB") };
-            //    options.RequestCultureProviders.Clear();
-            //});
+        {  
 
-
-            //services.Configure<RequestLocalizationOptions>(options =>
-            //{
-            //    options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("es-ES");
-            //    options.SupportedCultures = new List<CultureInfo> { new CultureInfo("es-ES") , new CultureInfo("en-US") };
-            //});
             services.Configure<RequestLocalizationOptions>(options =>
             {
                 var supportedCultures = new[]
@@ -55,22 +44,14 @@ namespace TelerikCore_2
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
                 options.RequestCultureProviders.Clear();
-            });
-
-            //services.AddLocalization();
+            });          
 
 
             services.AddHttpClient("TEST",op => 
             op.BaseAddress = new Uri("https://localhost:44319/api/"));
 
             services.AddDbContext<ApplicationDBContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-
-            //var mvcviews = services.AddControllersWithViews();
-            //#if (DEBUG)
-            //            mvcviews.AddRazorRuntimeCompilation();
-            //#endif
-
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));          
 
             // Add framework services.
             services

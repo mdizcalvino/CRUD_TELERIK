@@ -6,17 +6,17 @@ using System.Text;
 namespace Services
 {
 
-    public interface IUnitofWork : IDisposable
+    public interface IUnitOfWork : IDisposable
     {
         ApplicationDBContext _context { get; }
         void Commit();
     }
 
-    public class UnitofWork : IUnitofWork
+    public class UnitOfWork : IUnitOfWork
     {
         public ApplicationDBContext _context { get; }
 
-        public UnitofWork(ApplicationDBContext context)
+        public UnitOfWork(ApplicationDBContext context)
         {
             _context = context;
         }

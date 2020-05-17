@@ -13,9 +13,8 @@ namespace WebAPI_2.Middleware
         public static IServiceCollection AddDependency (this IServiceCollection services)
         {
             //inyectar servicios de repositorio generico
-            services.AddScoped<IUnitofWork, UnitofWork>();
-            services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
-
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));          
            
 
             services.AddAutoMapper(cfg =>
