@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kendo.Mvc.Extensions;
 using Kendo.Mvc.UI;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -19,22 +23,44 @@ namespace TelerikCore_2.Controllers
     {
 
         private readonly IGenericHttpService<OrderDto> _genericHttpService;
+        private readonly IAuthenticationService _authenticationService;
 
-        public OrdersController(IGenericHttpService<OrderDto> genericHttpService)
+        public OrdersController(IGenericHttpService<OrderDto> genericHttpService, IAuthenticationService authenticationService)
         {           
             _genericHttpService = genericHttpService;
             _genericHttpService.controlador = "Orders";
             _genericHttpService.cliente = "TEST";
+
+            _authenticationService = authenticationService;
+        }
+
+        public async Task LogOut()
+        {
+
+           
+            await _authenticationService.SignOutAsync(HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, new AuthenticationProperties() { });
+            await _authenticationService.SignOutAsync(HttpContext, OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties() { RedirectUri = "home/prueba" });
+
+            //await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            //await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme); //, new AuthenticationProperties{);
+            //return new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = Url.Action(nameof(Login)) });
         }
 
         public async Task<ActionResult<gridDto<OrderDto>>> Get([DataSourceRequest]DataSourceRequest request)
         {
+
+            //return StatusCode(401);
+
             var query = Request.QueryString;
             var (sc, gridDto) = await _genericHttpService.HttpGetAsync(query);
 
-            return StatusCode((int)sc, gridDto);  //result as ObjectResult;  StatusCodeResult; // StatusCode(((int)result.Item1, result.Item2);
+            if (sc == HttpStatusCode.Redirect){ HttpContext.Response.ContentType = "text/html"; return StatusCode((int)sc); }; // Notification Redirect(HttpContext.Response.Headers["Location"]); //.FirstOrDefault(x => x.Key == "location"); //  StatusCode((int)sc); // Unauthorized();
 
-            //return Json(result);
+            //return RedirectToAction(nameof(LogOut)); // new RedirectResult()
+            //return StatusCode(401);
+           // if (sc == HttpStatusCode.Redirect) return RedirectToAction(nameof(HomeController.LogOut), "home"); // return  new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = Url.Action(nameof(HomeController.Login), "Home") }); // StatusCode((int)sc);
+
+            return  StatusCode((int)sc, gridDto);            
 
         }
 
@@ -44,10 +70,8 @@ namespace TelerikCore_2.Controllers
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));            
 
             var (sc, entidad) = await _genericHttpService.HttPostAsync(entityDto);
-
-            //return StatusCode((int)result.Key,  new[] { result.Value }?.ToDataSourceResult(request, ModelState) ?? null);
-            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));
-            //return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);            
+            
+            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));                      
 
         }
 
@@ -59,10 +83,7 @@ namespace TelerikCore_2.Controllers
 
             var (sc, entidad) = await _genericHttpService.HttpPutAsync(entityDto, id.ToString());
 
-            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));
-
-
-            //return StatusCode((int)result.Key, (result.Value != null) ? new[] { result.Value }.ToDataSourceResult(request, ModelState) : null);
+            return StatusCode((int)sc, new[] { entidad }.ToDataSourceResult(new DataSourceRequest(), ModelState));          
 
         }
 

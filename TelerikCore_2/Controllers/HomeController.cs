@@ -28,17 +28,45 @@ namespace TelerikCore_2.Controllers
 
         }
 
+        //[AllowAnonymous]
+        //public IActionResult Login()
+        //{
+        //    return Challenge(new AuthenticationProperties
+        //    {
+        //        RedirectUri = "/Home/Index"
+        //    }, "oidc");
+        //}
+
+        //[AllowAnonymous]
+        //public IActionResult Logout()
+        //{
+        //    return SignOut(new AuthenticationProperties
+        //    {
+        //        RedirectUri = "/Home/Index"
+        //    }, "Cookies.Mvc", "oidc");
+        //}
+        
+
         
         public async Task<IActionResult> LogOut()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = Url.Action(nameof(LogoutSuccess)) });
+            //await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties{);
+            return new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = Url.Action(nameof(Login)) });
         }
 
         [HttpGet("logoutSuccess")]
         public IActionResult LogoutSuccess() => View("about");
 
+        public async Task Login(string returnUrl = "/")
+        {
+            await HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties() { RedirectUri = Url.Action(nameof(OrdersView)) }); // returnUrl });
+        }
 
+        public IActionResult Prueba()
+        {
+            return View("about");
+        }
         //public IActionResult LogOut()
         //{
 
@@ -81,6 +109,9 @@ namespace TelerikCore_2.Controllers
 
             var kv = await servicio.HttpCbosAsync();
 
+            if (kv.Key != HttpStatusCode.OK) return StatusCode((int)kv.Key); // ((int)HttpContext.Response.StatusCode); // new StatusCodeResult((int)kv.Key);
+
+            //if (kv.Key == HttpStatusCode.Unauthorized) return StatusCode(401, null); // RedirectToAction(nameof(LogOut)); // StatusCode((int)HttpStatusCode.Unauthorized);
 
             kv.Value.ForEach(x => {                
 
@@ -103,6 +134,8 @@ namespace TelerikCore_2.Controllers
                 }          
 
            });
+
+            return View();
 
             //Type type = Assembly.GetCallingAssembly.GetType("")
 
@@ -130,7 +163,7 @@ namespace TelerikCore_2.Controllers
             //ViewData["products"] = productsCboDto;   //.to categories.ToList();
             //ViewData["defaultProduct"] = productsCboDto.First();
 
-            return View();
+
         }
 
         public async Task<IActionResult> ProductsView()

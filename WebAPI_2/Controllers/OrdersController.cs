@@ -28,8 +28,7 @@ namespace WebAPI_2.Controllers
 
             var dest = await _genericRepository.GetPropertiesAsync(request, p => p.Customer, p => p.Employee);
 
-            return StatusCode(200, dest);
-            //return Ok(dest);
+            return StatusCode(200, dest);          
 
         }
 
@@ -40,9 +39,7 @@ namespace WebAPI_2.Controllers
             var entidad = await _genericRepository.CreateAsync(entityDto);
 
             return StatusCode(201, entidad);
-
-            //return StatusCode(201);
-
+          
         }
 
         [HttpPut("{id}")]
@@ -62,6 +59,7 @@ namespace WebAPI_2.Controllers
             await _genericRepository.DeleteAsync(x => x.OrderId ==  Int32.Parse(id));
 
             return StatusCode(200);
+
         }
     }
 }

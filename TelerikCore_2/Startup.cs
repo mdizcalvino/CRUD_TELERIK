@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using IdentityModel;
 using IdentityModel.Client;
@@ -75,6 +76,7 @@ namespace TelerikCore_2
                 options.DefaultForbidScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignOutScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
                         options =>
@@ -85,6 +87,10 @@ namespace TelerikCore_2
                             options.Cookie.SameSite = SameSiteMode.None;
                             options.SlidingExpiration = true;
                             options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
+                            options.Cookie.HttpOnly = false;
+
+                            options.AccessDeniedPath = "/Home/about";
+                           
                         })
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
@@ -102,8 +108,10 @@ namespace TelerikCore_2
                 options.ResponseMode = OpenIdConnectResponseMode.FormPost;
                 options.UsePkce = true;
                 //*
-                
 
+                options.SignedOutRedirectUri = "/hombe/about";
+                
+                
 
 
                 //options.Events.OnRedirectToIdentityProvider = async n =>
@@ -217,6 +225,31 @@ namespace TelerikCore_2
             //#endif
 
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("WhateverNameYouWantHere",
+                    builder =>
+                    {
+                        builder
+                           .AllowAnyOrigin()
+                           //.AllowCredentials()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                          
+                        
+                            
+
+                        //builder.WithOrigins($"http://localhost:6001",
+                        //                $"https://localhost:6001",
+                        //                $"https://localhost:6000",
+                        //                $"http://localhost:6000",
+                        //                $"http://localhost:5000",
+                        //                $"https://localhost:5000")
+
+                    });
+            });
+
+
             // Add framework services.
             services
                 .AddControllersWithViews()
@@ -266,6 +299,8 @@ namespace TelerikCore_2
             //            });
             //            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("es-ES");
 
+         
+
             app.UseRequestLocalization();
 
             //RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions
@@ -278,6 +313,8 @@ namespace TelerikCore_2
             //};
 
             //app.UseRequestLocalization(); // localizationOptions);
+
+            app.UseCors("WhateverNameYouWantHere");
 
             app.UseHttpsRedirection();
 
@@ -302,8 +339,20 @@ namespace TelerikCore_2
             //);
 
 
+            //app.UseStatusCodePages(async context => {
+            //    var request = context.HttpContext.Request;
+            //    var response = context.HttpContext.Response;
 
+            //    if (response.StatusCode == (int)HttpStatusCode.Unauthorized)
+            //    // you may also check requests path to do this only for specific methods       
+            //    // && request.Path.Value.StartsWith("/specificPath")
 
+            //    {
+            //        response.Redirect("/home/about");
+            //    }
+            //});
+
+            //app.UseStatusCodePagesWithReExecute("/Home/logout", "?statusCode={0}");
 
 
             app.UseStaticFiles();
@@ -312,11 +361,16 @@ namespace TelerikCore_2
 
             app.UseRouting();
 
+          
+
             app.UseAuthentication();
 
             //app.UseMiddleware<CheckAccessTokenValidityMiddleware>();
 
             app.UseAuthorization();
+
+           
+
 
 
 

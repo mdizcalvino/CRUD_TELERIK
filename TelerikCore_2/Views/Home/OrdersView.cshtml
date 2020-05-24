@@ -9,68 +9,70 @@
 
 
 @(Html.Kendo().Grid<Services.Dtos.OrderDto>()
-      .Name("grid_orders")
-      .Columns(columns =>
-      {
-          //columns.AutoGenerate(true);
-          columns.Bound(p => p.OrderId);
-          columns.ForeignKey(p => p.CustomerId, (System.Collections.IEnumerable)ViewData["customers"], "CustomerId", "CompanyName")
-            .Title("CustomerCbo").Width(200);
-          columns.ForeignKey(p => p.EmployeeId, (System.Collections.IEnumerable)ViewData["employees"], "EmployeeId", "LastName")
-             .Title("EmployeeCbo").Width(200);
-          //columns.Bound(p => p.Category).ClientTemplate("#=Category.CategoryName#").Width(180);
-          columns.Bound(p => p.OrderDate); //.Format("{0:G}"); //.Filterable(x => x.UI("datepicker")); //.Filterable(x => x.Cell(y => y.Template("datepicker")));
-          ;
-          columns.Bound(p => p.RequiredDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
-          columns.Bound(p => p.ShippedDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
-          columns.Bound(p => p.ShipVia);
-          columns.Bound(p => p.Freight); //.Format("{0:n}");
-          columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
-      })
-      .ToolBar(tools =>
-      {
-          tools.Create();
-      })
-      .Selectable(x => x.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
-      .Editable(editable => editable.Mode(GridEditMode.InLine))
-      .Sortable()
-      .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100, 1000 }))
-      .Filterable()
 
+          .Name("grid_orders")
+          .AutoBind(false)
+          .Columns(columns =>
+          {
+              //columns.AutoGenerate(true);
+              columns.Bound(p => p.OrderId);
+              columns.ForeignKey(p => p.CustomerId, (System.Collections.IEnumerable)ViewData["customers"], "CustomerId", "CompanyName")
+                .Title("CustomerCbo").Width(200);
+              columns.ForeignKey(p => p.EmployeeId, (System.Collections.IEnumerable)ViewData["employees"], "EmployeeId", "LastName")
+                 .Title("EmployeeCbo").Width(200);
+              //columns.Bound(p => p.Category).ClientTemplate("#=Category.CategoryName#").Width(180);
+              columns.Bound(p => p.OrderDate); //.Format("{0:G}"); //.Filterable(x => x.UI("datepicker")); //.Filterable(x => x.Cell(y => y.Template("datepicker")));
+              ;
+              columns.Bound(p => p.RequiredDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
+              columns.Bound(p => p.ShippedDate); //.Format("{0: dd/MM/yyyy}").Filterable(x => x.UI("datepicker"));
+              columns.Bound(p => p.ShipVia);
+              columns.Bound(p => p.Freight); //.Format("{0:n}");
+              columns.Command(command => { command.Edit(); command.Destroy(); }).Width(160);
+          })
+          .ToolBar(tools =>
+          {
+              tools.Create();
+          })
+          .Selectable(x => x.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+          .Editable(editable => editable.Mode(GridEditMode.InLine))
+          .Sortable()
+          .Pageable(pager => pager.PageSizes(new int[] { 5, 10, 20, 100, 1000 }))
+          .Filterable()
 
-      .DataSource(dataSource =>
-          dataSource
+          .DataSource(dataSource =>
+              dataSource
 
-            .WebApi()
-            .Events(events => events.Error("onError"))
-            .Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
-            .Model(model =>
-            {
-                model.Id(p => p.OrderId);
-                model.Field(p => p.OrderId).Editable(false);
-                model.Field(p => p.CustomerId).DefaultValue((
-                   ViewData["defaultCustomer"] as Services.Dtos.CustomersCboDto).CustomerId);
-                model.Field(p => p.EmployeeId).DefaultValue((
-                   ViewData["defaultEmployee"] as Services.Dtos.EmployeCboDto).EmployeeId);
-                //model.Field(p => p.Employee).DefaultValue(
-                //    ViewData["defaultEmployees"] as Services.Dtos.EmployeCboDto);
-            })
-            .Read(read => read.Action("Get", "Orders"))
+                .WebApi()
+                .ServerOperation(true)
+                .Events(events => events.Error("onError"))
+                //.Events(events => events.RequestEnd("onRequestEnd"))
+                //.Events(events => events.RequestStart("onRequestStart"))
+                .Culture(System.Globalization.CultureInfo.CurrentCulture.ToString())
+                .Model(model =>
+                {
+                    model.Id(p => p.OrderId);
+                    model.Field(p => p.OrderId).Editable(false);
+                    model.Field(p => p.CustomerId).DefaultValue((
+                       ViewData["defaultCustomer"] as Services.Dtos.CustomersCboDto).CustomerId);
+                    model.Field(p => p.EmployeeId).DefaultValue((
+                       ViewData["defaultEmployee"] as Services.Dtos.EmployeCboDto).EmployeeId);
+                    //model.Field(p => p.Employee).DefaultValue(
+                    //    ViewData["defaultEmployees"] as Services.Dtos.EmployeCboDto);
+                })
+
+            .Read(read => read.Action("Get", "Orders")) ///
             .Create(create => create.Action("Post", "Orders"))
             .Update(update => update.Action("Put", "Orders", new { id = "{0}" }))  //.Culture("es-ES")  //.Data("sendAntiForgery")
             .Destroy(destroy => destroy.Action("DELETE", "Orders", new { id = "{0}" }))
 
-
-
       )
 
       .Events(events => events.Change("change"))
-      .Events(events => events.Page("paginacion"))
-
+      .Events(events => events.Page("resetChild"))
+      .Events(events => events.Sort("resetChild"))
 
 //.Events(events => events.SaveChanges("savechanges"))
 //.Events(events => events.Save("save"))
-
 
 )
 
@@ -78,6 +80,7 @@
 <br />
 <br />
 <script>
+
 
     function convertDecimals(data) {
         for (var property in data) {
@@ -126,7 +129,7 @@
         getid: function (val) {return (this.id === val)}           
     };    
 
-    function paginacion(e) {
+    function resetChild(e) {
         $("#Child").css("display", "none");
     }
 
@@ -152,19 +155,188 @@
          return;      
     }
 
+    //setup 
+    $(document).ajaxSuccess(function (ev, jqXhr, settings) {
+        if (jqXhr.responseText.indexOf('DOCTYPE') > 0) {
+            document.write(jqXhr.responseText);
+        }
+
+    }).ajaxSend(function (ev, jqXhr, settings) {
+        settings.crossDomain = true,
+        settings.xhrFields = {
+            withCredentials: true
+        };
+    });
+
+    //primera llamada
+    $(function () {
+        var grid = $("#grid_orders").data("kendoGrid");
+        grid.dataSource.read();
+    });
+
+    //cancela cambios
     function onError(e) {
         this.cancelChanges();
 
-        var errorMessage = "";
-        if (e.errors) {
-            for (var error in e.errors) {
-                errorMessage += e.errors[error].errors[0] + " ";
-            }
-        }
+        //var errorMessage = "";
+        //if (e.errors) {
+        //    for (var error in e.errors) {
+        //        errorMessage += e.errors[error].errors[0] + " ";
+        //    }
+        //}
 
-            alert(errorMessage);
+        //    alert(errorMessage);
+
+        //var xhr = new XMLHttpRequest();
+        //xhr.open("GET", "https://localhost:6001/Home/logout");
+        //xhr.setRequestHeader("Content-Type", "application/json");
+        //xhr.withCredentials = true;
+        //xhr.onreadystatechange = function () {
+        //    if (this.readyState == 4) {
+        //        window.location = "https://localhost:6001/home/login";
+        //        //alert('Status: ' + this.status + '\nHeaders: ' + JSON.stringify(this.getAllResponseHeaders()) + '\nBody: ' + this.responseText);
+        //    }
+        //};
+        //xhr.send(); //{ \n    \"domain\": \"sitecore\", \n    \"username\": \"admin\", \n    \"password\": \"b\" \n}");
+
+
+
+        
 
     }
+
+
+
+    //$.ajaxSetup({
+    //    dataFilter: function (data, type) {
+    //        if (data && typeof data == "string") {
+    //            if (data.indexOf('window.location') > -1) {
+    //                eval(data);
+    //            }
+    //        }
+    //        return data;
+    //    }
+    //});
+    //$.ajaxSetup({
+
+    //    success: function (result, status, xhr) {
+
+
+    //    },
+    //    statusCode: {
+    //        302: function (response) {
+    //            var redirect_url = response.getResponseHeader('X-Ajax-Redirect-Url');
+    //            if (redirect_url != undefined) {
+    //                window.location.pathname = redirect_url;
+    //            }
+    //        }
+    //        200
+    //    }
+    //});
+
+   
+
+    //$(document).bind("ajaxSend", function () {
+    //    $("#loading").show();
+    //}).bind("ajaxComplete", function () {
+    //    $("#loading").hide();
+    //});
+
+
+    //function onRequestEnd(e)
+    //{
+
+    //    //alert(e);
+    //    document.write(e.response);
+    //    //eval(e.response);
+    //    //window.location.href = $(e.response).find("iframe")[0].src;
+    //    //window.location.href = $(e.response).find("a.PostLogoutRedirectUri")[0].href;
+    //    //
+    //    //window.location = event.currentTarget.responseURL;
+    //    //$("html").html(e);
+    //    //window.location = window.location.origin;
+    //    //window.location ="/";
+    //}
+
+ 
+
+    //$(function () {
+    //    var grid = $("#grid_orders").data("kendoGrid");
+
+    //    grid.dataSource.transport.options.read.beforeSend = addToken;
+    //    grid.dataSource.transport.options.create.beforeSend = addToken;
+    //    grid.dataSource.transport.options.update.beforeSend = addToken;
+    //    grid.dataSource.transport.options.destroy.beforeSend = addToken;
+
+    //    grid.dataSource.read(); // make a DataSource read, which will now use the authorization header
+
+    //    function addToken(xhr, dos) {
+
+    //        dos.crossDomain = true,
+    //            dos.xhrFields = {
+    //                withCredentials: true
+    //            };
+
+    //    //    xhr.success = exito;
+    //    //    //xhr.success = function (data) {
+    //    //    //    if (data.redirect) {
+    //    //    //        // data.redirect contains the string URL to redirect to
+    //    //    //        window.location.href = data.redirect;
+    //    //    //    } else {
+    //    //    //        // data.form contains the HTML for the replacement form
+    //    //    //        $("#myform").replaceWith(data.form);
+    //    //    //    }
+    //    //    //}
+    //    //}
+
+    //    //function exito(data) {
+    //    //    if (data.redirect) {
+    //    //        // data.redirect contains the string URL to redirect to
+    //    //        window.location.href = data.redirect;
+    //    //    } else {
+    //    //        // data.form contains the HTML for the replacement form
+    //    //        alert(data);
+    //    //    }
+
+    //    }
+
+            //xhr.onreadystatechange = function () {
+            //    if (this.readyState == 4 && this.status == 302) {
+            //        thsi.withCredentials = true;
+            //        //console.log(this.responseText);
+            //    }
+            //    if (this.readyState == 1) {
+            //        this.withCredentials = true;
+            //    }
+            //};
+
+            //xhr.addEventListener("load", function () {
+            //    if (req.status < 400)
+            //        xhr.withCredentials = true;
+            //    //crossDomain: true
+                
+            //});
+            //xhr.withCredentials = true; //.setRequestHeader('Authorization', '.......');
+       
+        
+    //});
+
+    //var xmlHttp = new XMLHttpRequest();
+    //xmlHttp.open("GET", url, true);
+    //xmlHttp.withCredentials = true;
+    //xmlHttp.onreadystatechange = function () {
+    //    if (this.readyState == 4 && this.status == 200) {
+    //        //console.log(this.responseText);
+    //    }
+    //};
+    //xmlHttp.send(null);
+
+   
+
+    //function onRequestStart(e) {
+    //    console.log("empieza request");
+    //}
+
     
     //function error_handler(e, f) {
     //    if (e.errors) {
