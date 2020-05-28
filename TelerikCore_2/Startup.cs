@@ -442,7 +442,7 @@ namespace TelerikCore_2
             });
         }
 
-
+        //Meditar para poner
         //public class CheckAccessTokenValidityMiddleware
         //{
         //    private readonly RequestDelegate _next;
