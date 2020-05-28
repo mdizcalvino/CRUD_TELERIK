@@ -156,16 +156,27 @@
     }
 
     //setup 
-    $(document).ajaxSuccess(function (ev, jqXhr, settings) {
-        if (jqXhr.responseText.indexOf('DOCTYPE') > 0) {
-            document.write(jqXhr.responseText);
-        }
+    //.ajaxSuccess(function (ev, jqXhr, settings) {
+    //    //if (jqXhr.responseText.indexOf('DOCTYPE') > 0) {
+    //    //    //document.write(jqXhr.responseText);
+    //    //}
+    //    if (jqXhr.status === 308) { window.location.href = jqXhr.getResponseHeader("redireccion") };
+    //    var a = "";
 
-    }).ajaxSend(function (ev, jqXhr, settings) {
+    //})
+
+    $(document).ajaxSend(function (ev, jqXhr, settings) {
+        jqXhr.setRequestHeader('fuente', 'TELERIK');
         settings.crossDomain = true,
-        settings.xhrFields = {
-            withCredentials: true
+            settings.xhrFields = {
+                withCredentials: true
+            };
+    }).ajaxComplete(function (ev, jqXhr, settings) {
+        if (jqXhr.status === 308) {
+            console.log(jqXhr.getResponseHeader("redireccion"));
+            window.location.href = jqXhr.getResponseHeader("redireccion");
         };
+        var a = "";
     });
 
     //primera llamada

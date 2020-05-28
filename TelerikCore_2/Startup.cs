@@ -13,9 +13,11 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +30,7 @@ using Microsoft.IdentityModel.Tokens;
 using Modelos.Contexto;
 using Newtonsoft.Json.Serialization;
 using Services.HttpServices;
-
+using TelerikCore_2.Controllers;
 
 namespace TelerikCore_2
 {
@@ -273,6 +275,51 @@ namespace TelerikCore_2
             return Task.FromResult(0);
         }
 
+        public class ResponseControlMiddleware
+        {
+            private readonly RequestDelegate _nextMiddleware;
+
+            public ResponseControlMiddleware(RequestDelegate next)
+            {
+                _nextMiddleware = next;
+            }
+
+            public async Task Invoke(HttpContext httpContext)
+            {
+                await _nextMiddleware.Invoke(httpContext);
+
+                //Action ac = ((HttpStatusCode)httpContext.Response.StatusCode, httpContext.Request.Headers["fuente"] == "TELERIK") switch
+                //{
+                //    (HttpStatusCode.PermanentRedirect, true) => () => httpContext.Response.Headers.Add("redireccion", UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}")),
+                //    (HttpStatusCode.PermanentRedirect, false) => () => httpContext.Response.Redirect(UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}")),
+                //    (_, _) => null
+                //};
+                //ac?.Invoke();
+
+                Action<bool> ac = ((HttpStatusCode)httpContext.Response.StatusCode) switch
+                {
+                    (HttpStatusCode.PermanentRedirect) => (bool sw) => { if (sw) { httpContext.Response.Headers.Add("redireccion", UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}")); return; } httpContext.Response.Redirect(UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}")); },                  
+                    _ => null
+                };
+                ac?.Invoke(httpContext.Request.Headers["fuente"] == "TELERIK");
+
+                //if ((HttpStatusCode) httpContext.Response.StatusCode == HttpStatusCode.PermanentRedirect)
+                //{
+                //    if(httpContext.Request.Headers["fuente"] == "TELERIK")
+                //    {
+
+                //        httpContext.Response.Headers.Add("redireccion", UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}"));
+                //    }
+                //    else
+                //    {
+                //        httpContext.Response.Redirect(UriHelper.BuildAbsolute(httpContext.Request.Scheme, httpContext.Request.Host, "/home", $"/{nameof(HomeController.LogOut)}"));
+                //    }
+
+                //}
+
+            }
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -299,7 +346,20 @@ namespace TelerikCore_2
             //            });
             //            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("es-ES");
 
-         
+            app.UseMiddleware<ResponseControlMiddleware>();
+
+            //app.Use(async (context, next) =>
+            //{
+                
+            //    if (context.Response.StatusCode == 308)
+            //    {
+            //        context.Response.Redirect("https://localhost:6001/home/logout");
+            //        return;   // short circuit
+            //    }
+
+            //    await next();
+            //});
+
 
             app.UseRequestLocalization();
 

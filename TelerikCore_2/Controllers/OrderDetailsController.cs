@@ -19,13 +19,6 @@ namespace TelerikCore_2.Controllers
     {
         private readonly IGenericHttpService<OrderDetailsDto> _genericHttpService;
 
-        //private readonly IHttpClientFactory _httpClientFactory;
-
-        //public OrderDetailsController(IHttpClientFactory httpClientFactory)
-        //{
-        //    _httpClientFactory = httpClientFactory;
-        //}
-
         public OrderDetailsController(IGenericHttpService<OrderDetailsDto> genericHttpService)
         {
             _genericHttpService = genericHttpService;
@@ -49,9 +42,9 @@ namespace TelerikCore_2.Controllers
         {
 
             var query = Request.QueryString;
-            var result = await _genericHttpService.HttpGetDetailAsync(query, id);
+            var (sc, _gridDto) = await _genericHttpService.HttpGetDetailAsync(query, id);
 
-            return StatusCode((int)result.sc, result.gridDto);
+            return StatusCode((int)sc, _gridDto);
 
             //var a = Request.QueryString;
 
